@@ -52,6 +52,7 @@
 #define WINDOW_H
 
 #include <QWidget>
+#include <QLabel>
 
 QT_BEGIN_NAMESPACE
 class QSlider;
@@ -70,26 +71,18 @@ public:
 protected:
     void keyPressEvent(QKeyEvent *event) override;
 
-private slots:
-    void dockUndock();
-    void uploadAMesh();
-    void xSliderMove();
-    void ySliderMove();
-    void zSliderMove();
-
-    void xSliderHaveToMove(int angle);
-    void ySliderHaveToMove(int angle);
-    void zSliderHaveToMove(int angle);
 
 private:
-    QSlider *createSlider();
-
+    QPushButton *import;
+    QPushButton *tool1;
+    QPushButton *tool2;
+    QPushButton *tool3;
+    QPushButton *tool4;
+    QLabel *gradient;
+    QLabel *texture;
+    QLabel *cretes;
+    QLabel *rivieres;
     GLWidget *glWidget;
-    QSlider *xSlider;
-    QSlider *ySlider;
-    QSlider *zSlider;
-    QPushButton *dockBtn;
-    QPushButton *uploadMesh;
     MainWindow *mainWindow;
 };
 

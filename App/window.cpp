@@ -64,61 +64,110 @@
 Window::Window(MainWindow *mw)
     : mainWindow(mw)
 {
-    glWidget = new GLWidget;
-
-    xSlider = createSlider();
-    ySlider = createSlider();
-    zSlider = createSlider();
-
-
-    //A completer, connecter les sliders de cette classe avec le glWidget pour mettre à jour la rotation
-    // et inversement
-    connect(xSlider,&QSlider::valueChanged, this, &Window::xSliderMove);
-    connect(ySlider, &QSlider::valueChanged, this, &Window::ySliderMove);
-    connect(zSlider, &QSlider::valueChanged, this, &Window::zSliderMove);
-
-    connect(glWidget,&GLWidget::objectRotChangeOnX, this, &Window::xSliderHaveToMove);
-    connect(glWidget, &GLWidget::objectRotChangeOnY, this, &Window::ySliderHaveToMove);
-    connect(glWidget, &GLWidget::objectRotChangeOnZ, this, &Window::zSliderHaveToMove);
-
-
-
-    QVBoxLayout *mainLayout = new QVBoxLayout;
-    QHBoxLayout *container = new QHBoxLayout;
-    container->addWidget(glWidget);
-    container->addWidget(xSlider);
-    container->addWidget(ySlider);
-    container->addWidget(zSlider);
+    mainWindow = mw;
+    mainWindow->setFixedSize(1000, 1000);
 
     QWidget *w = new QWidget;
+    QHBoxLayout *container = new QHBoxLayout;
     w->setLayout(container);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+
+    import = new QPushButton();
+    import->setFixedSize(100, 100);
+    QIcon icon("./import.png");
+    import->setIcon(icon);
+    import->setIconSize(QSize(40, 40));
+    
+    // ToolSide->addWidget(import);
+    mainLayout->addWidget(import);
     mainLayout->addWidget(w);
-    dockBtn = new QPushButton(tr("Undock"), this);
-    connect(dockBtn, &QPushButton::clicked, this, &Window::dockUndock);
-    mainLayout->addWidget(dockBtn);
 
-     uploadMesh = new QPushButton(tr("upload Mesh"), this);
-     connect(uploadMesh, &QPushButton::clicked, this, &Window::uploadAMesh);
+    
+    glWidget = new GLWidget;
+    container->setSpacing(20);
 
+    QVBoxLayout *mapSide = new QVBoxLayout;
+    QWidget *mapSideContainer = new QWidget;
+    mapSideContainer->setLayout(mapSide);
+    mapSideContainer->setFixedSize(120, 1000);
+
+    QVBoxLayout *ToolSide = new QVBoxLayout;
+    QWidget *ToolSideContainer = new QWidget;
+    ToolSideContainer->setLayout(ToolSide);
+    ToolSideContainer->setFixedSize(120, 1000);
+
+    container->addWidget(ToolSideContainer);
+    container->addWidget(glWidget);
+    container->addWidget(mapSideContainer);
+    container->setAlignment(ToolSideContainer, Qt::AlignVCenter );
+    container->setAlignment(mapSideContainer, Qt::AlignVCenter );
+
+
+
+    QWidget *BackgroundTools= new QWidget();
+    BackgroundTools->setFixedSize(QSize(100,840));
+    BackgroundTools->setStyleSheet("background-color: lightgrey;border-radius:20px;");
+    ToolSide->addWidget(BackgroundTools);
+    ToolSide->setAlignment(BackgroundTools,Qt::AlignTop);
+
+    tool1=new QPushButton();
+    tool1->setFixedSize(QSize(40,40));
+    tool1->setStyleSheet("background-color:grey");
+    tool2=new QPushButton();
+    tool2->setFixedSize(QSize(40,40));
+    tool2->setStyleSheet("background-color:grey");
+    tool3=new QPushButton();
+    tool3->setFixedSize(QSize(40,40));
+    tool3->setStyleSheet("background-color:grey");
+    tool4=new QPushButton();
+    tool4->setFixedSize(QSize(40,40));
+    tool4->setStyleSheet("background-color:grey");
+
+    QVBoxLayout *ToolsLayout = new QVBoxLayout;
+    BackgroundTools->setLayout(ToolsLayout);
+
+
+    ToolsLayout->addWidget(tool1);
+    ToolsLayout->addWidget(tool2);
+    ToolsLayout->addWidget(tool3);
+    ToolsLayout->addWidget(tool4);
+
+    ToolsLayout->setAlignment(tool1, Qt::AlignHCenter );
+    ToolsLayout->setAlignment(tool2, Qt::AlignHCenter );
+    ToolsLayout->setAlignment(tool3, Qt::AlignHCenter );
+    ToolsLayout->setAlignment(tool4, Qt::AlignHCenter );
+
+    gradient = new QLabel(mainWindow);
+    texture = new QLabel(mainWindow);
+    cretes = new QLabel(mainWindow);
+    rivieres = new QLabel(mainWindow);
+
+    gradient->setStyleSheet("background-color: black;");
+    gradient->setFixedSize(QSize(120, 80));
+
+    texture->setStyleSheet("background-color: red;");
+    texture->setFixedSize(QSize(120, 80));
+
+    cretes->setStyleSheet("background-color: green;");
+    cretes->setFixedSize(QSize(120, 80));
+
+    rivieres->setStyleSheet("background-color: blue;");
+    rivieres->setFixedSize(QSize(120, 80));
+
+
+    mapSide->addWidget(gradient);
+    mapSide->addWidget(texture);
+    mapSide->addWidget(cretes);
+    mapSide->addWidget(rivieres);
+    mapSide->setAlignment(gradient,Qt::AlignTop);
+    mapSide->setAlignment(texture,Qt::AlignTop);
+    mapSide->setAlignment(cretes,Qt::AlignTop);
+    mapSide->setAlignment(rivieres,Qt::AlignTop);
 
     setLayout(mainLayout);
 
-    xSlider->setValue(15 * 16);
-    ySlider->setValue(345 * 16);
-    zSlider->setValue(0 * 16);
-
     setWindowTitle(tr("Qt OpenGL"));
-}
-
-QSlider *Window::createSlider()
-{
-    QSlider *slider = new QSlider(Qt::Vertical);
-    slider->setRange(0, 360 * 16);
-    slider->setSingleStep(16);
-    slider->setPageStep(15 * 16);
-    slider->setTickInterval(15 * 16);
-    slider->setTickPosition(QSlider::TicksRight);
-    return slider;
 }
 
 void Window::keyPressEvent(QKeyEvent *e)
@@ -127,68 +176,4 @@ void Window::keyPressEvent(QKeyEvent *e)
         close();
     else
         QWidget::keyPressEvent(e);
-}
-
-void Window::dockUndock()
-{
-    if (parent()) {
-        setParent(0);
-        setAttribute(Qt::WA_DeleteOnClose);
-        move(QApplication::desktop()->width() / 2 - width() / 2,
-             QApplication::desktop()->height() / 2 - height() / 2);
-        dockBtn->setText(tr("Dock"));
-        show();
-    } else {
-        if (!mainWindow->centralWidget()) {
-            if (mainWindow->isVisible()) {
-                setAttribute(Qt::WA_DeleteOnClose, false);
-                dockBtn->setText(tr("Undock"));
-                mainWindow->setCentralWidget(this);
-            } else {
-                QMessageBox::information(0, tr("Cannot dock"), tr("Main window already closed"));
-            }
-        } else {
-            QMessageBox::information(0, tr("Cannot dock"), tr("Main window already occupied"));
-        }
-    }
-}
-
-void Window::uploadAMesh()
-{
-    glWidget->loadOFF("./camel_n.off");
-}
-
-void Window::xSliderMove()
-{
-    glWidget->setXRotation(xSlider->value());
-}
-
-void Window::ySliderMove()
-{
-    glWidget->setYRotation(ySlider->value());
-
-}
-
-void Window::zSliderMove()
-{
-    glWidget->setZRotation(zSlider->value());
-
-}
-
-void Window::xSliderHaveToMove(int angle)
-{
-    xSlider->setValue(angle);
-}
-
-
-void Window::ySliderHaveToMove(int angle)
-{
-    ySlider->setValue(angle);
-
-}
-
-void Window::zSliderHaveToMove(int angle)
-{
-    zSlider->setValue(angle);
-
 }
