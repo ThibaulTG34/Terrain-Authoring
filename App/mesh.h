@@ -13,13 +13,12 @@ public:
     ~Mesh();
     QVector<QVector3D> vertices;
     QVector<short> indices;
-    bool loadOFF( const std::string & filename
-                  );
+    bool loadOFF(const std::string &filename);
+
 private:
     void createCube();
-
+    void CreateFlatTerrain(int nb);
+    void changeResolution();
 };
 
 #endif // MESH_H
-
-

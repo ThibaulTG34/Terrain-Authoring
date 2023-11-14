@@ -174,6 +174,13 @@ void Window::keyPressEvent(QKeyEvent *e)
         close();
     else
         QWidget::keyPressEvent(e);
+
+    if (e->key() == Qt::Key_W)
+    {
+        glWidget->wireframe = !glWidget->wireframe;
+
+    }
+
 }
 
 void Window::getPicture()
@@ -185,8 +192,7 @@ void Window::getPicture()
         QPixmap pixmap(fileName);
         gradient->setStyleSheet("background-color: transparent;");
         QPixmap scaledPixmap = pixmap.scaled(gradient->size(), Qt::KeepAspectRatio);
-        gradient->setPixmap(scaledPixmap); 
+        gradient->setPixmap(scaledPixmap);
         gradient->setAlignment(Qt::AlignCenter);
     }
-
 }

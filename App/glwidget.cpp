@@ -53,6 +53,7 @@
 #include <QOpenGLShaderProgram>
 #include <QCoreApplication>
 #include <math.h>
+#include <iostream>
 
 bool GLWidget::m_transparent = false;
 
@@ -66,15 +67,22 @@ GLWidget::GLWidget(QWidget *parent)
     m_core = QSurfaceFormat::defaultFormat().profile() == QSurfaceFormat::CoreProfile;
     // --transparent causes the clear color to be transparent. Therefore, on systems that
     // support it, the widget will become transparent apart from the logo.
-    if (m_transparent) {
+    if (m_transparent)
+    {
         QSurfaceFormat fmt = format();
         fmt.setAlphaBufferSize(8);
         setFormat(fmt);
     }
+
+    wireframe = false;
 }
 
 GLWidget::~GLWidget()
 {
+    wireframe = false;
+    cam_position = QVector3D(0, 0, -10.0f);
+    cam_front = QVector3D(0.0f, 0.0f, -1.0f);
+    cam_up = QVector3D(0.0f, 1.0f, 0.0f);
     makeCurrent();
     cleanup();
 }
@@ -93,7 +101,6 @@ void GLWidget::loadOFF(std::string file)
 {
     object.loadOFF(file);
     cleanup();
-
 }
 
 static void qNormalizeAngle(int &angle)
@@ -107,9 +114,10 @@ static void qNormalizeAngle(int &angle)
 void GLWidget::setXRotation(int angle)
 {
     qNormalizeAngle(angle);
-    if (angle != m_xRot) {
+    if (angle != m_xRot)
+    {
         m_xRot = angle;
-        //Completer pour emettre un signal
+        // Completer pour emettre un signal
         emit objectRotChangeOnX(angle);
 
         update();
@@ -119,9 +127,10 @@ void GLWidget::setXRotation(int angle)
 void GLWidget::setYRotation(int angle)
 {
     qNormalizeAngle(angle);
-    if (angle != m_yRot) {
+    if (angle != m_yRot)
+    {
         m_yRot = angle;
-        //Completer pour emettre un signal
+        // Completer pour emettre un signal
         emit objectRotChangeOnY(angle);
         update();
     }
@@ -130,9 +139,10 @@ void GLWidget::setYRotation(int angle)
 void GLWidget::setZRotation(int angle)
 {
     qNormalizeAngle(angle);
-    if (angle != m_zRot) {
+    if (angle != m_zRot)
+    {
         m_zRot = angle;
-        //Completer pour emettre un signal
+        // Completer pour emettre un signal
         emit objectRotChangeOnZ(angle);
 
         update();
@@ -195,7 +205,6 @@ void GLWidget::initializeGL()
     vao_.create();
     QOpenGLVertexArrayObject::Binder vaoBinder(&vao_);
 
-
     vertexBuffer_.create();
     vertexBuffer_.bind();
     vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
@@ -213,11 +222,12 @@ void GLWidget::initializeGL()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
     vao_.release();
     // Store the vertex attribute bindings for the program.
-//    setupVertexAttribs();
+    //    setupVertexAttribs();
 
     // Our camera never changes in this example.
     m_view.setToIdentity();
-    m_view.translate(0, 0, -10);
+    m_view.translate(0,0,-10);
+    // m_view.lookAt(cam_position, cam_position + cam_front, cam_up);
 
     // Light position is fixed.
     m_program->setUniformValue(m_light_pos_loc, QVector3D(0, 0, 70));
@@ -257,10 +267,17 @@ void GLWidget::paintGL()
     // Set normal matrix
     m_program->setUniformValue(m_normal_matrix_loc, normal_matrix);
 
-//    glDrawArrays(GL_TRIANGLES, 0, object.vertices.size());
+    //    glDrawArrays(GL_TRIANGLES, 0, object.vertices.size());
+
+    if (wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    update();
 
     vao_.bind();
-    glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_SHORT, (void*)0);
+    glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_SHORT, (void *)0);
 
     vao_.release();
 
@@ -276,19 +293,81 @@ void GLWidget::resizeGL(int w, int h)
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
     m_last_position = event->pos();
+    if (event->button() == Qt::LeftButton)
+    {
+        mouseMovePressed = false;
+        mouseRotatePressed = true;
+        mouseZoomPressed = false;
+    }
+    else if (event->button() == Qt::RightButton)
+    {
+        lastX = event->x();
+        lastY = event->y();
+        mouseMovePressed = true;
+        mouseRotatePressed = false;
+        mouseZoomPressed = false;
+    }
+    else if (event->button() == Qt::MiddleButton)
+    {
+        if (!mouseZoomPressed)
+        {
+            lastZoom = event->y();
+            mouseMovePressed = false;
+            mouseRotatePressed = false;
+            mouseZoomPressed = true;
+        }
+    }
 }
+
+// void GLWidget::WheelEvent(QMouseEvent *event)
+// {
+//     lastZoom = event->y();
+//     mouseMovePressed = false;
+//     mouseRotatePressed = false;
+//     mouseZoomPressed = true;
+// }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
     int dx = event->x() - m_last_position.x();
     int dy = event->y() - m_last_position.y();
 
-    if (event->buttons() & Qt::LeftButton) {
-        setXRotation(m_xRot + 8 * dy);
-        setYRotation(m_yRot + 8 * dx);
-    } else if (event->buttons() & Qt::RightButton) {
-        setXRotation(m_xRot + 8 * dy);
-        setZRotation(m_zRot + 8 * dx);
+    // if (event->buttons() & Qt::LeftButton)
+    // {
+    //     setXRotation(m_xRot + 8 * dy);
+    //     setYRotation(m_yRot + 8 * dx);
+    // }
+    // else if (event->buttons() & Qt::RightButton)
+    // {
+    //     setXRotation(m_xRot + 8 * dy);
+    //     setZRotation(m_zRot + 8 * dx);
+    // }
+    // m_last_position = event->pos();
+
+    int x = event->x();
+    int y = event->y();
+
+    if (mouseRotatePressed)
+    {
+        setXRotation(m_xRot + 5 * dy);
+        setYRotation(m_yRot + 5 * dx);
     }
-    m_last_position = event->pos();
+    else if (mouseMovePressed)
+    {
+        int deltaX = x - lastX;
+        int deltaY = y - lastY;
+
+        m_view.translate(deltaX * 0.01, deltaY * 0.01, 0);
+
+        lastX = x;
+        lastY = y;
+    }
+    else if (mouseZoomPressed)
+    {
+        int deltaZoom = y - lastZoom;
+
+        m_view.translate(0, 0.f, deltaZoom * 0.02f);
+
+        lastZoom = y;
+    }
 }
