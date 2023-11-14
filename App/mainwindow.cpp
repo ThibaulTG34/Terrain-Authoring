@@ -58,5 +58,7 @@ MainWindow::MainWindow()
 {
  if (!centralWidget())
         setCentralWidget(new Window(this));
+        this->showMaximized();
+
 }
 

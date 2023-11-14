@@ -71,6 +71,8 @@ public:
 protected:
     void keyPressEvent(QKeyEvent *event) override;
 
+public slots:
+void getPicture();
 
 private:
     QPushButton *import;
