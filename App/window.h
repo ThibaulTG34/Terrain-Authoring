@@ -54,6 +54,8 @@
 #include <QWidget>
 #include <QLabel>
 #include <QVector3D>
+#include <carte.h>
+
 
 QT_BEGIN_NAMESPACE
 class QSlider;
@@ -62,6 +64,7 @@ QT_END_NAMESPACE
 
 class GLWidget;
 class MainWindow;
+class Carte;
 
 class Window : public QWidget
 {
@@ -74,23 +77,19 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 public slots:
-    void getPicture();
-    void initGradient(QPixmap p);
+    void initGradient();
     void initTexture(QPixmap p);
     void initRidge(QPixmap p);
     void initRiver(QPixmap p);
 
 private:
-    QPushButton *import;
+
     QPushButton *tool1;
     QPushButton *tool2;
     QPushButton *tool3;
     QPushButton *tool4;
 
-    QSize taille_image;
-
-    QLabel *gradient;
-    QVector<char> gradient_data;
+    Carte *gradient;
 
     QLabel *texture;
     QVector<QVector3D> texture_data;

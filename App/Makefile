@@ -37,7 +37,7 @@ MOVE          = mv -f
 TAR           = tar -cf
 COMPRESS      = gzip -9f
 DISTNAME      = App1.0.0
-DISTDIR = /mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App/obj/App1.0.0
+DISTDIR = /mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App/obj/App1.0.0
 LINK          = g++
 LFLAGS        = 
 LIBS          = $(SUBLIBS) /usr/lib/x86_64-linux-gnu/libQt5Widgets.so /usr/lib/x86_64-linux-gnu/libQt5Gui.so /usr/lib/x86_64-linux-gnu/libQt5Core.so -lGL -lpthread   
@@ -53,15 +53,18 @@ OBJECTS_DIR   = obj/
 ####### Files
 
 SOURCES       = glwidget.cpp \
+		carte.cpp \
 		main.cpp \
 		mesh.cpp \
 		window.cpp \
 		mainwindow.cpp \
 		logo.cpp qrc_shaders.cpp \
 		moc/moc_glwidget.cpp \
+		moc/moc_carte.cpp \
 		moc/moc_window.cpp \
 		moc/moc_mainwindow.cpp
 OBJECTS       = obj/glwidget.o \
+		obj/carte.o \
 		obj/main.o \
 		obj/mesh.o \
 		obj/window.o \
@@ -69,6 +72,7 @@ OBJECTS       = obj/glwidget.o \
 		obj/logo.o \
 		obj/qrc_shaders.o \
 		obj/moc_glwidget.o \
+		obj/moc_carte.o \
 		obj/moc_window.o \
 		obj/moc_mainwindow.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
@@ -152,10 +156,12 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
 		App.pro glwidget.h \
+		carte.h \
 		mesh.h \
 		window.h \
 		mainwindow.h \
 		logo.h glwidget.cpp \
+		carte.cpp \
 		main.cpp \
 		mesh.cpp \
 		window.cpp \
@@ -353,8 +359,8 @@ distdir: FORCE
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents shaders.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents glwidget.h mesh.h window.h mainwindow.h logo.h $(DISTDIR)/
-	$(COPY_FILE) --parents glwidget.cpp main.cpp mesh.cpp window.cpp mainwindow.cpp logo.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents glwidget.h carte.h mesh.h window.h mainwindow.h logo.h $(DISTDIR)/
+	$(COPY_FILE) --parents glwidget.cpp carte.cpp main.cpp mesh.cpp window.cpp mainwindow.cpp logo.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -393,25 +399,30 @@ compiler_moc_predefs_clean:
 moc/moc_predefs.h: /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 	g++ -pipe -g -Wall -Wextra -dM -E -o moc/moc_predefs.h /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: moc/moc_glwidget.cpp moc/moc_window.cpp moc/moc_mainwindow.cpp
+compiler_moc_header_make_all: moc/moc_glwidget.cpp moc/moc_carte.cpp moc/moc_window.cpp moc/moc_mainwindow.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc/moc_glwidget.cpp moc/moc_window.cpp moc/moc_mainwindow.cpp
+	-$(DEL_FILE) moc/moc_glwidget.cpp moc/moc_carte.cpp moc/moc_window.cpp moc/moc_mainwindow.cpp
 moc/moc_glwidget.cpp: glwidget.h \
 		logo.h \
 		mesh.h \
 		moc/moc_predefs.h \
 		/usr/lib/qt5/bin/moc
-	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include glwidget.h -o moc/moc_glwidget.cpp
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App -I/mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include glwidget.h -o moc/moc_glwidget.cpp
+
+moc/moc_carte.cpp: carte.h \
+		moc/moc_predefs.h \
+		/usr/lib/qt5/bin/moc
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App -I/mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include carte.h -o moc/moc_carte.cpp
 
 moc/moc_window.cpp: window.h \
 		moc/moc_predefs.h \
 		/usr/lib/qt5/bin/moc
-	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include window.h -o moc/moc_window.cpp
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App -I/mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include window.h -o moc/moc_window.cpp
 
 moc/moc_mainwindow.cpp: mainwindow.h \
 		moc/moc_predefs.h \
 		/usr/lib/qt5/bin/moc
-	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include mainwindow.h -o moc/moc_mainwindow.cpp
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App -I/mnt/c/Users/fabien/Documents/M2/Projet-Terrain/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include mainwindow.h -o moc/moc_mainwindow.cpp
 
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
@@ -433,6 +444,9 @@ obj/glwidget.o: glwidget.cpp glwidget.h \
 		logo.h \
 		mesh.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/glwidget.o glwidget.cpp
+
+obj/carte.o: carte.cpp carte.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/carte.o carte.cpp
 
 obj/main.o: main.cpp glwidget.h \
 		logo.h \
@@ -462,6 +476,9 @@ obj/qrc_shaders.o: qrc_shaders.cpp
 
 obj/moc_glwidget.o: moc/moc_glwidget.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/moc_glwidget.o moc/moc_glwidget.cpp
+
+obj/moc_carte.o: moc/moc_carte.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/moc_carte.o moc/moc_carte.cpp
 
 obj/moc_window.o: moc/moc_window.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/moc_window.o moc/moc_window.cpp

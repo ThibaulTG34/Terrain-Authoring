@@ -63,6 +63,8 @@
 #include <QImage>
 #include <iostream>
 #include <QFileDialog>
+#include <QCheckBox>
+#include <QGraphicsOpacityEffect>
 
 using namespace std;
 
@@ -78,16 +80,7 @@ Window::Window(MainWindow *mw)
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
 
-    import = new QPushButton();
-    import->setFixedSize(100, 100);
-    QIcon icon("./import.png");
-    import->setIcon(icon);
-    import->setIconSize(QSize(40, 40));
-
-    connect(import, &QPushButton::clicked, this, &Window::getPicture);
-
     // ToolSide->addWidget(import);
-    mainLayout->addWidget(import);
     mainLayout->addWidget(w);
 
     glWidget = new GLWidget;
@@ -141,13 +134,11 @@ Window::Window(MainWindow *mw)
     ToolsLayout->setAlignment(tool3, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool4, Qt::AlignHCenter);
 
-    gradient = new QLabel(mainWindow);
+    gradient=new Carte(this);
+
     texture = new QLabel(mainWindow);
     cretes = new QLabel(mainWindow);
     rivieres = new QLabel(mainWindow);
-
-    gradient->setStyleSheet("background-color: black;");
-    gradient->setFixedSize(QSize(120, 80));
 
     texture->setStyleSheet("background-color: red;");
     texture->setFixedSize(QSize(120, 80));
@@ -182,76 +173,56 @@ void Window::keyPressEvent(QKeyEvent *e)
     if (e->key() == Qt::Key_W)
     {
         glWidget->wireframe = !glWidget->wireframe;
-
-    }
-
-}
-
-void Window::getPicture()
-{
-    QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une image", "", "Images (*.png *.jpg *.bmp)");
-
-    if (!fileName.isEmpty())
-    {
-        QPixmap pixmap(fileName);
-        QDialog dialog;
-        dialog.setWindowTitle("Saisie d'informations");
-
-        // Layout pour organiser les widgets
-        QVBoxLayout layout(&dialog);
-        QRadioButton *button1 = new QRadioButton("Gradient", &dialog);
-        QRadioButton *button2 = new QRadioButton("Texture", &dialog);
-        QRadioButton *button3 = new QRadioButton("Crêtes", &dialog);
-        QRadioButton *button4 = new QRadioButton("Rivières", &dialog);
-        layout.addWidget(button1);
-        layout.addWidget(button2);
-        layout.addWidget(button3);
-        layout.addWidget(button4);
-
-        QPushButton buttonOK("OK");
-        layout.addWidget(&buttonOK);
-        // Gestionnaire de signaux pour le bouton "OK"
-        QObject::connect(&buttonOK, &QPushButton::clicked, [&]()
-                         {
-                             if (button1->isChecked())
-                             {
-                                 initGradient(pixmap);
-                             }
-                             else if (button2->isChecked())
-                             {
-                                 initTexture(pixmap);
-                             }
-                             else if (button3->isChecked())
-                             {
-                                 initRidge(pixmap);
-                             }
-                             else if (button4->isChecked())
-                             {
-                                 initRiver(pixmap);
-                             }  
-                             dialog.accept(); });
-
-        dialog.exec();
     }
 }
 
-void Window::initGradient(QPixmap p)
-{
-    gradient->setStyleSheet("background-color: transparent;");
-    QPixmap scaledPixmap = p.scaled(gradient->size(), Qt::KeepAspectRatio);
-    gradient->setPixmap(scaledPixmap);
-    gradient->setAlignment(Qt::AlignCenter);
-    QImage img = p.toImage().convertToFormat(QImage::Format_Grayscale8);
-    QSize size_img = p.size();
-    taille_image=size_img;
-    for (size_t i = 0; i < size_img.width(); i++)
-    {
-        for (size_t j = 0; j < size_img.height(); j++)
-        {
-            gradient_data.append(qGray(grayImage.pixel(i, j)));
-        }
-    }
-}
+// void Window::getPicture()
+// {
+//     QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une image", "", "Images (*.png *.jpg *.bmp)");
+
+//     if (!fileName.isEmpty())
+//     {
+//         QPixmap pixmap(fileName);
+//         QDialog dialog;
+//         dialog.setWindowTitle("Saisie d'informations");
+
+//         // Layout pour organiser les widgets
+//         QVBoxLayout layout(&dialog);
+//         QRadioButton *button1 = new QRadioButton("Gradient", &dialog);
+//         QRadioButton *button2 = new QRadioButton("Texture", &dialog);
+//         QRadioButton *button3 = new QRadioButton("Crêtes", &dialog);
+//         QRadioButton *button4 = new QRadioButton("Rivières", &dialog);
+//         layout.addWidget(button1);
+//         layout.addWidget(button2);
+//         layout.addWidget(button3);
+//         layout.addWidget(button4);
+
+//         QPushButton buttonOK("OK");
+//         layout.addWidget(&buttonOK);
+//         // Gestionnaire de signaux pour le bouton "OK"
+//         QObject::connect(&buttonOK, &QPushButton::clicked, [&]()
+//                          {
+//                              if (button1->isChecked())
+//                              {
+//                                  initGradient();
+//                              }
+//                              else if (button2->isChecked())
+//                              {
+//                                  initTexture(pixmap);
+//                              }
+//                              else if (button3->isChecked())
+//                              {
+//                                  initRidge(pixmap);
+//                              }
+//                              else if (button4->isChecked())
+//                              {
+//                                  initRiver(pixmap);
+//                              }  
+//                              dialog.accept(); });
+
+//         dialog.exec();
+//     }
+// }
 
 void Window::initTexture(QPixmap p)
 {

@@ -36,14 +36,14 @@ QT_MOC_LITERAL(0, 0, 6), // "Window"
 QT_MOC_LITERAL(1, 7, 10), // "getPicture"
 QT_MOC_LITERAL(2, 18, 0), // ""
 QT_MOC_LITERAL(3, 19, 12), // "initGradient"
-QT_MOC_LITERAL(4, 32, 1), // "p"
-QT_MOC_LITERAL(5, 34, 11), // "initTexture"
+QT_MOC_LITERAL(4, 32, 11), // "initTexture"
+QT_MOC_LITERAL(5, 44, 1), // "p"
 QT_MOC_LITERAL(6, 46, 9), // "initRidge"
 QT_MOC_LITERAL(7, 56, 9) // "initRiver"
 
     },
-    "Window\0getPicture\0\0initGradient\0p\0"
-    "initTexture\0initRidge\0initRiver"
+    "Window\0getPicture\0\0initGradient\0"
+    "initTexture\0p\0initRidge\0initRiver"
 };
 #undef QT_MOC_LITERAL
 
@@ -62,17 +62,17 @@ static const uint qt_meta_data_Window[] = {
 
  // slots: name, argc, parameters, tag, flags
        1,    0,   39,    2, 0x0a /* Public */,
-       3,    1,   40,    2, 0x0a /* Public */,
-       5,    1,   43,    2, 0x0a /* Public */,
-       6,    1,   46,    2, 0x0a /* Public */,
-       7,    1,   49,    2, 0x0a /* Public */,
+       3,    0,   40,    2, 0x0a /* Public */,
+       4,    1,   41,    2, 0x0a /* Public */,
+       6,    1,   44,    2, 0x0a /* Public */,
+       7,    1,   47,    2, 0x0a /* Public */,
 
  // slots: parameters
     QMetaType::Void,
-    QMetaType::Void, QMetaType::QPixmap,    4,
-    QMetaType::Void, QMetaType::QPixmap,    4,
-    QMetaType::Void, QMetaType::QPixmap,    4,
-    QMetaType::Void, QMetaType::QPixmap,    4,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::QPixmap,    5,
+    QMetaType::Void, QMetaType::QPixmap,    5,
+    QMetaType::Void, QMetaType::QPixmap,    5,
 
        0        // eod
 };
@@ -84,7 +84,7 @@ void Window::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         (void)_t;
         switch (_id) {
         case 0: _t->getPicture(); break;
-        case 1: _t->initGradient((*reinterpret_cast< QPixmap(*)>(_a[1]))); break;
+        case 1: _t->initGradient(); break;
         case 2: _t->initTexture((*reinterpret_cast< QPixmap(*)>(_a[1]))); break;
         case 3: _t->initRidge((*reinterpret_cast< QPixmap(*)>(_a[1]))); break;
         case 4: _t->initRiver((*reinterpret_cast< QPixmap(*)>(_a[1]))); break;
