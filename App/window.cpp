@@ -56,11 +56,15 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QDesktopWidget>
 #include <QApplication>
 #include <QMessageBox>
+#include <QImage>
 #include <iostream>
 #include <QFileDialog>
+
+using namespace std;
 
 Window::Window(MainWindow *mw)
     : mainWindow(mw)
@@ -183,10 +187,85 @@ void Window::getPicture()
     if (!fileName.isEmpty())
     {
         QPixmap pixmap(fileName);
-        gradient->setStyleSheet("background-color: transparent;");
-        QPixmap scaledPixmap = pixmap.scaled(gradient->size(), Qt::KeepAspectRatio);
-        gradient->setPixmap(scaledPixmap); 
-        gradient->setAlignment(Qt::AlignCenter);
-    }
+        QDialog dialog;
+        dialog.setWindowTitle("Saisie d'informations");
 
+        // Layout pour organiser les widgets
+        QVBoxLayout layout(&dialog);
+        QRadioButton *button1 = new QRadioButton("Gradient", &dialog);
+        QRadioButton *button2 = new QRadioButton("Texture", &dialog);
+        QRadioButton *button3 = new QRadioButton("Crêtes", &dialog);
+        QRadioButton *button4 = new QRadioButton("Rivières", &dialog);
+        layout.addWidget(button1);
+        layout.addWidget(button2);
+        layout.addWidget(button3);
+        layout.addWidget(button4);
+
+        QPushButton buttonOK("OK");
+        layout.addWidget(&buttonOK);
+        // Gestionnaire de signaux pour le bouton "OK"
+        QObject::connect(&buttonOK, &QPushButton::clicked, [&]()
+                         {
+                             if (button1->isChecked())
+                             {
+                                 initGradient(pixmap);
+                             }
+                             else if (button2->isChecked())
+                             {
+                                 initTexture(pixmap);
+                             }
+                             else if (button3->isChecked())
+                             {
+                                 initRidge(pixmap);
+                             }
+                             else if (button4->isChecked())
+                             {
+                                 initRiver(pixmap);
+                             }  
+                             dialog.accept(); });
+
+        dialog.exec();
+    }
+}
+
+void Window::initGradient(QPixmap p)
+{
+    gradient->setStyleSheet("background-color: transparent;");
+    QPixmap scaledPixmap = p.scaled(gradient->size(), Qt::KeepAspectRatio);
+    gradient->setPixmap(scaledPixmap);
+    gradient->setAlignment(Qt::AlignCenter);
+    QImage img = p.toImage().convertToFormat(QImage::Format_Grayscale8);
+    QSize size_img = p.size();
+    taille_image=size_img;
+    for (size_t i = 0; i < size_img.width(); i++)
+    {
+        for (size_t j = 0; j < size_img.height(); j++)
+        {
+            gradient_data.append(qGray(grayImage.pixel(i, j)));
+        }
+    }
+}
+
+void Window::initTexture(QPixmap p)
+{
+    texture->setStyleSheet("background-color: transparent;");
+    QPixmap scaledPixmap = p.scaled(texture->size(), Qt::KeepAspectRatio);
+    texture->setPixmap(scaledPixmap);
+    texture->setAlignment(Qt::AlignCenter);
+}
+
+void Window::initRidge(QPixmap p)
+{
+    cretes->setStyleSheet("background-color: transparent;");
+    QPixmap scaledPixmap = p.scaled(cretes->size(), Qt::KeepAspectRatio);
+    cretes->setPixmap(scaledPixmap);
+    cretes->setAlignment(Qt::AlignCenter);
+}
+
+void Window::initRiver(QPixmap p)
+{
+    rivieres->setStyleSheet("background-color: transparent;");
+    QPixmap scaledPixmap = p.scaled(rivieres->size(), Qt::KeepAspectRatio);
+    rivieres->setPixmap(scaledPixmap);
+    rivieres->setAlignment(Qt::AlignCenter);
 }

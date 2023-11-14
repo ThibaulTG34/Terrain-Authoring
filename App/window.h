@@ -53,6 +53,7 @@
 
 #include <QWidget>
 #include <QLabel>
+#include <QVector3D>
 
 QT_BEGIN_NAMESPACE
 class QSlider;
@@ -68,11 +69,16 @@ class Window : public QWidget
 
 public:
     Window(MainWindow *mw);
+
 protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 public slots:
-void getPicture();
+    void getPicture();
+    void initGradient(QPixmap p);
+    void initTexture(QPixmap p);
+    void initRidge(QPixmap p);
+    void initRiver(QPixmap p);
 
 private:
     QPushButton *import;
@@ -80,10 +86,21 @@ private:
     QPushButton *tool2;
     QPushButton *tool3;
     QPushButton *tool4;
+
+    QSize taille_image;
+
     QLabel *gradient;
+    QVector<char> gradient_data;
+
     QLabel *texture;
+    QVector<QVector3D> texture_data;
+
     QLabel *cretes;
+    QVector<QVector3D> cretes_data;
+
     QLabel *rivieres;
+    QVector<QVector3D> rivieres_data;
+
     GLWidget *glWidget;
     MainWindow *mainWindow;
 };
