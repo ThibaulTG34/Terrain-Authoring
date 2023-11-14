@@ -77,8 +77,10 @@ public:
     Mesh object;
     void loadOFF(std::string file);
 
+    bool wireframe;
+
 public slots:
-    //Completer : ajouter des slots pour signaler appliquer le changement de rotation
+    // Completer : ajouter des slots pour signaler appliquer le changement de rotation
     void setXRotation(int angle);
     void setYRotation(int angle);
     void setZRotation(int angle);
@@ -86,7 +88,7 @@ public slots:
 
 signals:
 
-    //Completer : ajouter des signaux pour signaler des changement de rotation
+    // Completer : ajouter des signaux pour signaler des changement de rotation
     void objectRotChangeOnX(int angle);
     void objectRotChangeOnY(int angle);
     void objectRotChangeOnZ(int angle);
@@ -97,6 +99,7 @@ protected:
     void resizeGL(int width, int height) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
+    void WheelEvent(QMouseEvent *event);
 
 private:
     void setupVertexAttribs();
@@ -115,10 +118,20 @@ private:
     QMatrix4x4 m_model;
     static bool m_transparent;
 
-    QOpenGLVertexArrayObject vao_;
-    QOpenGLBuffer vertexBuffer_=QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-    QOpenGLBuffer indexBuffer_=QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+    bool mouseMovePressed = false;
+    bool mouseRotatePressed = false;
+    bool mouseZoomPressed = false;
+    int lastX = 0;
+    int lastY = 0;
+    int lastZoom = 0;
 
+    QVector3D cam_position;
+    QVector3D cam_front;
+    QVector3D cam_up;
+
+    QOpenGLVertexArrayObject vao_;
+    QOpenGLBuffer vertexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    QOpenGLBuffer indexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
 };
 
 #endif

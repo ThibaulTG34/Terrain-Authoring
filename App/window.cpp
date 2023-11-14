@@ -178,6 +178,13 @@ void Window::keyPressEvent(QKeyEvent *e)
         close();
     else
         QWidget::keyPressEvent(e);
+
+    if (e->key() == Qt::Key_W)
+    {
+        glWidget->wireframe = !glWidget->wireframe;
+
+    }
+
 }
 
 void Window::getPicture()
