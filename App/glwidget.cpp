@@ -227,6 +227,7 @@ void GLWidget::initializeGL()
     // Our camera never changes in this example.
     m_view.setToIdentity();
     m_view.translate(0,0,-10);
+    // m_view.rotate(45.0f, 1, 1, 0);
     // m_view.lookAt(cam_position, cam_position + cam_front, cam_up);
 
     // Light position is fixed.
@@ -370,4 +371,30 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
         lastZoom = y;
     }
+}
+
+void GLWidget::UpdateResolution(int res)
+{
+    object.CreateFlatTerrain(res);
+
+    vertexBuffer_.bind();
+    vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
+    vertexBuffer_.release();
+
+    indexBuffer_.bind();
+    indexBuffer_.allocate(object.indices.constData(), object.indices.size() * sizeof(short));
+    indexBuffer_.release();
+}
+
+void GLWidget::UpdateTerrain(QVector<char> data)
+{
+    object.ModifyTerrain(data);
+
+    vertexBuffer_.bind();
+    vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
+    vertexBuffer_.release();
+
+    indexBuffer_.bind();
+    indexBuffer_.allocate(object.indices.constData(), object.indices.size() * sizeof(short));
+    indexBuffer_.release();
 }

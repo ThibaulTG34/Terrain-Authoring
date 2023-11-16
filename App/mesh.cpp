@@ -5,16 +5,24 @@
 #include <QOpenGLWidget>
 #include <fstream>
 #include <iostream>
+#include <random>
 
-Mesh::Mesh()
+Mesh::Mesh(){
+    CreateFlatTerrain(4);
+}
+
+Mesh::Mesh(int res)
 {
     // createCube();
-    CreateFlatTerrain(4);
+    CreateFlatTerrain(res);
+    // AddRandomNoise(0.1f);
 }
 
 Mesh::~Mesh()
 {
 }
+
+
 
 void Mesh::createCube()
 {
@@ -198,5 +206,53 @@ void Mesh::CreateFlatTerrain(int nb)
             this->indices.append(bottomLeftIndexNum);
             this->indices.append(bottomRightIndexNum);
         }
+    }
+
+    // Initialise();
+}
+
+int Mesh::Max(QVector<char> data)
+{
+    int max = data[0];
+    for (int i = 0; i < data.size(); i++)
+    {
+        if(data[i] > max)
+            max = data[i];
+    }
+
+    return max;
+}
+
+int Mesh::Min(QVector<char> data)
+{
+    int min = data[0];
+    for (int i = 0; i < data.size(); i++)
+    {
+        if(data[i] < min)
+            min = data[i];
+    }
+
+    return min;
+}
+
+void Mesh::ModifyTerrain(QVector<char> data)
+{
+    for (int i=0; i<this->vertices.size(); i++) 
+    {
+        this->vertices[i].setY(data[i]/255.0f);
+    }
+}
+
+
+void Mesh::AddRandomNoise(float amplitude)
+{
+    for (auto& point : this->vertices) {
+
+        std::random_device rd;
+        std::default_random_engine generator(rd());
+        std::uniform_real_distribution<double> distribution(-amplitude, amplitude);
+
+        point.setY(distribution(generator));
+
     }
 }

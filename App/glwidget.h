@@ -76,6 +76,8 @@ public:
     QSize sizeHint() const override;
     Mesh object;
     void loadOFF(std::string file);
+    void UpdateResolution(int res);
+    void UpdateTerrain(QVector<char> data);
 
     bool wireframe;
 
@@ -128,6 +130,7 @@ private:
     QVector3D cam_position;
     QVector3D cam_front;
     QVector3D cam_up;
+
 
     QOpenGLVertexArrayObject vao_;
     QOpenGLBuffer vertexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);

@@ -195,7 +195,7 @@ void Window::getPicture()
     {
         QPixmap pixmap(fileName);
         QDialog dialog;
-        dialog.setWindowTitle("Saisie d'informations");
+     dialog.setWindowTitle("Saisie d'informations");
 
         // Layout pour organiser les widgets
         QVBoxLayout layout(&dialog);
@@ -244,13 +244,18 @@ void Window::initGradient(QPixmap p)
     QImage img = p.toImage().convertToFormat(QImage::Format_Grayscale8);
     QSize size_img = p.size();
     taille_image=size_img;
+    glWidget->UpdateResolution(size_img.width());
+    // glWidget->object.CreateFlatTerrain(size_img.width());
+
     for (size_t i = 0; i < size_img.width(); i++)
     {
         for (size_t j = 0; j < size_img.height(); j++)
         {
-            gradient_data.append(qGray(grayImage.pixel(i, j)));
+            gradient_data.append(qGray(img.pixel(i, j)));
         }
     }
+
+    glWidget->UpdateTerrain(gradient_data);
 }
 
 void Window::initTexture(QPixmap p)
