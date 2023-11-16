@@ -86,27 +86,26 @@ Window::Window(MainWindow *mw)
     glWidget = new GLWidget;
     container->setSpacing(20);
 
-    QVBoxLayout *mapSide = new QVBoxLayout;
-    QWidget *mapSideContainer = new QWidget;
-    mapSideContainer->setLayout(mapSide);
-    mapSideContainer->setFixedSize(120, 1000);
+   
 
     QVBoxLayout *ToolSide = new QVBoxLayout;
     QWidget *ToolSideContainer = new QWidget;
     ToolSideContainer->setLayout(ToolSide);
     ToolSideContainer->setFixedSize(120, 1000);
 
+    maps=new Cartes(this);
+
     container->addWidget(ToolSideContainer);
     container->addWidget(glWidget);
-    container->addWidget(mapSideContainer);
+    container->addWidget(maps);
     container->setAlignment(ToolSideContainer, Qt::AlignVCenter);
-    container->setAlignment(mapSideContainer, Qt::AlignVCenter);
+    container->setAlignment(maps, Qt::AlignVCenter);
 
     QWidget *BackgroundTools = new QWidget();
     BackgroundTools->setFixedSize(QSize(100, 840));
     BackgroundTools->setStyleSheet("background-color: lightgrey;border-radius:20px;");
     ToolSide->addWidget(BackgroundTools);
-    ToolSide->setAlignment(BackgroundTools, Qt::AlignTop);
+    ToolSide->setAlignment(BackgroundTools, Qt::AlignCenter);
 
     tool1 = new QPushButton();
     tool1->setFixedSize(QSize(40, 40));
@@ -134,29 +133,6 @@ Window::Window(MainWindow *mw)
     ToolsLayout->setAlignment(tool3, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool4, Qt::AlignHCenter);
 
-    gradient=new Carte(this);
-
-    texture = new QLabel(mainWindow);
-    cretes = new QLabel(mainWindow);
-    rivieres = new QLabel(mainWindow);
-
-    texture->setStyleSheet("background-color: red;");
-    texture->setFixedSize(QSize(120, 80));
-
-    cretes->setStyleSheet("background-color: green;");
-    cretes->setFixedSize(QSize(120, 80));
-
-    rivieres->setStyleSheet("background-color: blue;");
-    rivieres->setFixedSize(QSize(120, 80));
-
-    mapSide->addWidget(gradient);
-    mapSide->addWidget(texture);
-    mapSide->addWidget(cretes);
-    mapSide->addWidget(rivieres);
-    mapSide->setAlignment(gradient, Qt::AlignTop);
-    mapSide->setAlignment(texture, Qt::AlignTop);
-    mapSide->setAlignment(cretes, Qt::AlignTop);
-    mapSide->setAlignment(rivieres, Qt::AlignTop);
 
     setLayout(mainLayout);
 

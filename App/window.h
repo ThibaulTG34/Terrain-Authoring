@@ -54,7 +54,7 @@
 #include <QWidget>
 #include <QLabel>
 #include <QVector3D>
-#include <carte.h>
+#include <cartes.h>
 
 
 QT_BEGIN_NAMESPACE
@@ -77,7 +77,6 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 public slots:
-    void initGradient();
     void initTexture(QPixmap p);
     void initRidge(QPixmap p);
     void initRiver(QPixmap p);
@@ -89,7 +88,7 @@ private:
     QPushButton *tool3;
     QPushButton *tool4;
 
-    Carte *gradient;
+    Cartes *maps;
 
     QLabel *texture;
     QVector<QVector3D> texture_data;

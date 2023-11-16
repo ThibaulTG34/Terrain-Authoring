@@ -4,13 +4,13 @@ OBJECTS_DIR = ./obj
 INCLUDEPATH += $$PWD
 
 HEADERS       = glwidget.h \
-                carte.h \
+                cartes.h \
                 mesh.h \
                 window.h \
                 mainwindow.h \
                 logo.h
 SOURCES       = glwidget.cpp \
-                carte.cpp \
+                cartes.cpp \
                 main.cpp \
                 mesh.cpp \
                 window.cpp \

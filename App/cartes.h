@@ -16,16 +16,19 @@
 #include <QFileDialog>
 #include <QCheckBox>
 #include <QGraphicsOpacityEffect>
-class Carte : public QWidget
+#include <QLabel>
+
+class Cartes : public QWidget
 {
     Q_OBJECT
 public:
-    explicit Carte(QWidget *parent = nullptr);
-    bool mapVisible=true;
+    explicit Cartes(QWidget *parent = nullptr);
     QSize taille_image;
-    QLabel *map;
+    QLabel *gradient;
+    QLabel *texture;
+    QLabel *cretes;
+    QLabel *rivieres;
     QVector<char> map_data;
-    QPushButton *visible_map; 
 
 signals:
 
