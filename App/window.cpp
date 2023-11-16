@@ -63,6 +63,8 @@
 #include <QImage>
 #include <iostream>
 #include <QFileDialog>
+#include <QCheckBox>
+#include <QGraphicsOpacityEffect>
 
 using namespace std;
 
@@ -78,42 +80,32 @@ Window::Window(MainWindow *mw)
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
 
-    import = new QPushButton();
-    import->setFixedSize(100, 100);
-    QIcon icon("./import.png");
-    import->setIcon(icon);
-    import->setIconSize(QSize(40, 40));
-
-    connect(import, &QPushButton::clicked, this, &Window::getPicture);
-
     // ToolSide->addWidget(import);
-    mainLayout->addWidget(import);
     mainLayout->addWidget(w);
 
     glWidget = new GLWidget;
     container->setSpacing(20);
 
-    QVBoxLayout *mapSide = new QVBoxLayout;
-    QWidget *mapSideContainer = new QWidget;
-    mapSideContainer->setLayout(mapSide);
-    mapSideContainer->setFixedSize(120, 1000);
+   
 
     QVBoxLayout *ToolSide = new QVBoxLayout;
     QWidget *ToolSideContainer = new QWidget;
     ToolSideContainer->setLayout(ToolSide);
     ToolSideContainer->setFixedSize(120, 1000);
 
+    maps=new Cartes(this);
+
     container->addWidget(ToolSideContainer);
     container->addWidget(glWidget);
-    container->addWidget(mapSideContainer);
+    container->addWidget(maps);
     container->setAlignment(ToolSideContainer, Qt::AlignVCenter);
-    container->setAlignment(mapSideContainer, Qt::AlignVCenter);
+    container->setAlignment(maps, Qt::AlignVCenter);
 
     QWidget *BackgroundTools = new QWidget();
     BackgroundTools->setFixedSize(QSize(100, 840));
     BackgroundTools->setStyleSheet("background-color: lightgrey;border-radius:20px;");
     ToolSide->addWidget(BackgroundTools);
-    ToolSide->setAlignment(BackgroundTools, Qt::AlignTop);
+    ToolSide->setAlignment(BackgroundTools, Qt::AlignCenter);
 
     tool1 = new QPushButton();
     tool1->setFixedSize(QSize(40, 40));
@@ -141,31 +133,6 @@ Window::Window(MainWindow *mw)
     ToolsLayout->setAlignment(tool3, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool4, Qt::AlignHCenter);
 
-    gradient = new QLabel(mainWindow);
-    texture = new QLabel(mainWindow);
-    cretes = new QLabel(mainWindow);
-    rivieres = new QLabel(mainWindow);
-
-    gradient->setStyleSheet("background-color: black;");
-    gradient->setFixedSize(QSize(120, 80));
-
-    texture->setStyleSheet("background-color: red;");
-    texture->setFixedSize(QSize(120, 80));
-
-    cretes->setStyleSheet("background-color: green;");
-    cretes->setFixedSize(QSize(120, 80));
-
-    rivieres->setStyleSheet("background-color: blue;");
-    rivieres->setFixedSize(QSize(120, 80));
-
-    mapSide->addWidget(gradient);
-    mapSide->addWidget(texture);
-    mapSide->addWidget(cretes);
-    mapSide->addWidget(rivieres);
-    mapSide->setAlignment(gradient, Qt::AlignTop);
-    mapSide->setAlignment(texture, Qt::AlignTop);
-    mapSide->setAlignment(cretes, Qt::AlignTop);
-    mapSide->setAlignment(rivieres, Qt::AlignTop);
 
     setLayout(mainLayout);
 
@@ -182,81 +149,56 @@ void Window::keyPressEvent(QKeyEvent *e)
     if (e->key() == Qt::Key_W)
     {
         glWidget->wireframe = !glWidget->wireframe;
-
-    }
-
-}
-
-void Window::getPicture()
-{
-    QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une image", "", "Images (*.png *.jpg *.bmp)");
-
-    if (!fileName.isEmpty())
-    {
-        QPixmap pixmap(fileName);
-        QDialog dialog;
-     dialog.setWindowTitle("Saisie d'informations");
-
-        // Layout pour organiser les widgets
-        QVBoxLayout layout(&dialog);
-        QRadioButton *button1 = new QRadioButton("Gradient", &dialog);
-        QRadioButton *button2 = new QRadioButton("Texture", &dialog);
-        QRadioButton *button3 = new QRadioButton("Crêtes", &dialog);
-        QRadioButton *button4 = new QRadioButton("Rivières", &dialog);
-        layout.addWidget(button1);
-        layout.addWidget(button2);
-        layout.addWidget(button3);
-        layout.addWidget(button4);
-
-        QPushButton buttonOK("OK");
-        layout.addWidget(&buttonOK);
-        // Gestionnaire de signaux pour le bouton "OK"
-        QObject::connect(&buttonOK, &QPushButton::clicked, [&]()
-                         {
-                             if (button1->isChecked())
-                             {
-                                 initGradient(pixmap);
-                             }
-                             else if (button2->isChecked())
-                             {
-                                 initTexture(pixmap);
-                             }
-                             else if (button3->isChecked())
-                             {
-                                 initRidge(pixmap);
-                             }
-                             else if (button4->isChecked())
-                             {
-                                 initRiver(pixmap);
-                             }  
-                             dialog.accept(); });
-
-        dialog.exec();
     }
 }
 
-void Window::initGradient(QPixmap p)
-{
-    gradient->setStyleSheet("background-color: transparent;");
-    QPixmap scaledPixmap = p.scaled(gradient->size(), Qt::KeepAspectRatio);
-    gradient->setPixmap(scaledPixmap);
-    gradient->setAlignment(Qt::AlignCenter);
-    QImage img = p.toImage().convertToFormat(QImage::Format_Grayscale8);
-    QSize size_img = p.size();
-    taille_image=size_img;
-    glWidget->UpdateResolution(size_img.width());
-    // glWidget->object.CreateFlatTerrain(size_img.width());
+// void Window::getPicture()
+// {
+//     QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une image", "", "Images (*.png *.jpg *.bmp)");
 
-    for (size_t i = 0; i < size_img.width(); i++)
-    {
-        for (size_t j = 0; j < size_img.height(); j++)
-        {
-            gradient_data.append(qGray(img.pixel(i, j)));
-        }
-    }
+//     if (!fileName.isEmpty())
+//     {
+//         QPixmap pixmap(fileName);
+//         QDialog dialog;
+//         dialog.setWindowTitle("Saisie d'informations");
 
-    glWidget->UpdateTerrain(gradient_data);
-}
+//         // Layout pour organiser les widgets
+//         QVBoxLayout layout(&dialog);
+//         QRadioButton *button1 = new QRadioButton("Gradient", &dialog);
+//         QRadioButton *button2 = new QRadioButton("Texture", &dialog);
+//         QRadioButton *button3 = new QRadioButton("Crêtes", &dialog);
+//         QRadioButton *button4 = new QRadioButton("Rivières", &dialog);
+//         layout.addWidget(button1);
+//         layout.addWidget(button2);
+//         layout.addWidget(button3);
+//         layout.addWidget(button4);
+
+//         QPushButton buttonOK("OK");
+//         layout.addWidget(&buttonOK);
+//         // Gestionnaire de signaux pour le bouton "OK"
+//         QObject::connect(&buttonOK, &QPushButton::clicked, [&]()
+//                          {
+//                              if (button1->isChecked())
+//                              {
+//                                  initGradient();
+//                              }
+//                              else if (button2->isChecked())
+//                              {
+//                                  initTexture(pixmap);
+//                              }
+//                              else if (button3->isChecked())
+//                              {
+//                                  initRidge(pixmap);
+//                              }
+//                              else if (button4->isChecked())
+//                              {
+//                                  initRiver(pixmap);
+//                              }  
+//                              dialog.accept(); });
+
+//         dialog.exec();
+//     }
+// }
 
 void Window::initTexture(QPixmap p)
 {
