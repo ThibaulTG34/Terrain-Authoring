@@ -1,5 +1,6 @@
 #include "cartes.h"
 #include <QVBoxLayout>
+#include <basics.h>
 
 Cartes::Cartes(QWidget *parent)
     : QWidget{parent}
@@ -61,26 +62,28 @@ Cartes::Cartes(QWidget *parent)
 
 void Cartes::initMap()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une image", "", "Images (*.png *.jpg *.bmp)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une carte", "", "Images (*.png *.jpg *.bmp *.ppm)");
 
     if (!fileName.isEmpty())
     {
         QPixmap pixmap(fileName);
         gradient->setStyleSheet("background-color: transparent;");
-        gradient->setStyleSheet("background-color: transparent;");
-        gradient->setStyleSheet("background-color: transparent;");
         QPixmap scaledPixmap = pixmap.scaled(gradient->size(), Qt::KeepAspectRatio);
         gradient->setPixmap(scaledPixmap);
         gradient->setAlignment(Qt::AlignCenter);
-        QImage img = pixmap.toImage().convertToFormat(QImage::Format_Grayscale8);
+        QImage img = pixmap.toImage();
         QSize size_img = pixmap.size();
         taille_image = size_img;
         for (size_t i = 0; i < size_img.width(); i++)
         {
             for (size_t j = 0; j < size_img.height(); j++)
             {
-                map_data.append(qGray(img.pixel(i, j)));
+                localisation_constraint.append(qRed(img.pixel(i, j)));
+                values_constraint.append(qGreen(img.pixel(i, j)));
+                laplacien.append(qBlue(img.pixel(i, j)));
             }
         }
     }
 }
+
+

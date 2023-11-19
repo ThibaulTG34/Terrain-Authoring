@@ -47,6 +47,9 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <GL/glext.h>
 
 #ifndef GLWIDGET_H
 #define GLWIDGET_H

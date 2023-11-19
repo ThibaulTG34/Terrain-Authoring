@@ -137,6 +137,24 @@ Window::Window(MainWindow *mw)
     setLayout(mainLayout);
 
     setWindowTitle(tr("Qt OpenGL"));
+
+    // load the different maps
+	ScalarField2D alpha("./004_mask.pgm"); // locations of fixed constraints (Dirichlet) /!\ 0 = fixed constraint, 1 = laplacian
+	alpha.NormalizeField();
+	ScalarField2D altitudes("./004_alt.pgm"); // values of fixed constraints (Dirichlet) where alpha = 0 (ignored on other locations)
+	altitudes.NormalizeField();
+	ScalarField2D laplacian("./004_lap.pgm"); // this contains the Laplacian, that can be calculated from the divergence of the gradient field
+	laplacian.AffineTransform(1.0f,-0.5f); // center to 0
+	laplacian.AffineTransform(0.03f); // adjust the strength of the Lapacian
+
+    SimpleGeometricMultigridFloat diffusion(alpha, altitudes, laplacian);
+	// initialize the opengl shaders
+	diffusion.InitGL();
+	// execute the solver
+	diffusion.Solve();
+	// get the result and export it
+	ScalarField2D result = diffusion.GetResult();
+	result.SavePGM("./result.pgm");
 }
 
 void Window::keyPressEvent(QKeyEvent *e)

@@ -17,6 +17,7 @@
 #include <QCheckBox>
 #include <QGraphicsOpacityEffect>
 #include <QLabel>
+#include <basics.h>
 
 class Cartes : public QWidget
 {
@@ -28,7 +29,9 @@ public:
     QLabel *texture;
     QLabel *cretes;
     QLabel *rivieres;
-    QVector<char> map_data;
+    QVector<char> localisation_constraint;
+    QVector<char> values_constraint;
+    QVector<char> laplacien;
 
 signals:
 

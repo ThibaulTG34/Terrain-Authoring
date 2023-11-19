@@ -53,6 +53,8 @@
 
 #include <QMainWindow>
 
+
+#include <diffusionterrain.h>
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
