@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    QCoreApplication::setApplicationName("TP1 - Intro Qt");
+    QCoreApplication::setApplicationName("Terrain Authoring");  
     QCoreApplication::setOrganizationName("QtProject");
     QCoreApplication::setApplicationVersion(QT_VERSION_STR);
     QCommandLineParser parser;
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     parser.addOption(coreProfileOption);
     QCommandLineOption transparentOption("transparent", "Transparent window");
     parser.addOption(transparentOption);
-
+    
     parser.process(app);
 
     QSurfaceFormat fmt;
@@ -88,13 +88,13 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(fmt);
 
     MainWindow mainWindow;
-
+  
     GLWidget::setTransparent(parser.isSet(transparentOption));
     if (GLWidget::isTransparent()) {
         mainWindow.setAttribute(Qt::WA_TranslucentBackground);
         mainWindow.setAttribute(Qt::WA_NoSystemBackground, false);
     }
-    mainWindow.resize(mainWindow.sizeHint());
+    mainWindow.resize(mainWindow.sizeHint()); 
     int desktopArea = QApplication::desktop()->width() *
                      QApplication::desktop()->height();
     int widgetArea = mainWindow.width() * mainWindow.height();

@@ -7,6 +7,8 @@
 
 #include <climits>
 #include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 
 #include "gpu-shader.h"
 
@@ -203,7 +205,8 @@ GLuint read_program(const char *filename, const char *definitions)
   std::cout << "Read program" << std::endl;
   GLuint program;
   program = glCreateProgram();
- std::cout << "/* message */" << std::endl;
+  
+  std::cout << "/* message */" << std::endl;
   reload_program(program, filename, definitions);
   program_print_errors(program);
   return program;

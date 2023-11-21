@@ -64,7 +64,7 @@ QT_END_NAMESPACE
 
 class GLWidget;
 class MainWindow;
-class Carte;
+class Cartes;
 
 class Window : public QWidget
 {
@@ -72,9 +72,11 @@ class Window : public QWidget
 
 public:
     Window(MainWindow *mw);
+    void TerrainModif(QString hauteurs);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+
 
 public slots:
     void initTexture(QPixmap p);
@@ -82,6 +84,7 @@ public slots:
     void initRiver(QPixmap p);
 
 private:
+    GLWidget *glWidget;
 
     QPushButton *tool1;
     QPushButton *tool2;
@@ -99,7 +102,6 @@ private:
     QLabel *rivieres;
     QVector<QVector3D> rivieres_data;
 
-    GLWidget *glWidget;
     MainWindow *mainWindow;
 };
 

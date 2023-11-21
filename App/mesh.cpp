@@ -7,22 +7,29 @@
 #include <iostream>
 #include <random>
 
-Mesh::Mesh(){
-    CreateFlatTerrain(4);
+Mesh::Mesh()
+{
+    resolution = 16;
+    CreateFlatTerrain(1, 16);
 }
 
 Mesh::Mesh(int res)
 {
-    // createCube();
-    CreateFlatTerrain(res);
-    // AddRandomNoise(0.1f);
+    resolution = res;
+    CreateFlatTerrain(1, 16);
 }
 
 Mesh::~Mesh()
 {
 }
 
+int Mesh::getResolution(){
+    return resolution;
+}
 
+void Mesh::setResolution(int r){
+    resolution = r;
+}
 
 void Mesh::createCube()
 {
@@ -172,31 +179,34 @@ bool Mesh::loadOFF(const std::string &filename)
     return true;
 }
 
-void Mesh::CreateFlatTerrain(int nb)
+void Mesh::CreateFlatTerrain(int taille, int resolution)
 {
     vertices.clear();
     indices.clear();
+    uvs.clear();
 
-    for (float i = 0; i < (float)nb; i++)
+    for (int i = 0; i < resolution; i++)
     {
-        for (float j = 0; j < (float)nb; j++)
+        for (int j = 0; j < resolution; j++)
         {
-            float x = 2 * i / (nb - 1) - 1.f;
+            float x = (float)(taille * i) / (float)(resolution - 1) - 1.f;
             float y = 0;
-            float z = 2 * j / (nb - 1) - 1.f;
+            float z = (float)(taille * j) / (float)(resolution - 1) - 1.f;
 
             this->vertices.append(QVector3D(x, y, z));
+
+            this->uvs.append(QVector2D(1.0 * ((float)i / (float)resolution), 1.0 - (float)(1.0 * j) / (float)resolution));
         }
     }
 
-    for (int row = 0; row < nb - 1; row++)
+    for (int row = 0; row < resolution - 1; row++)
     {
-        for (int col = 0; col < nb - 1; col++)
+        for (int col = 0; col < resolution - 1; col++)
         {
-            short topLeftIndexNum = (short)(row * nb + col);
-            short topRightIndexNum = (short)(row * nb + col + 1);
-            short bottomLeftIndexNum = (short)((row + 1) * nb + col);
-            short bottomRightIndexNum = (short)((row + 1) * nb + col + 1);
+            short topLeftIndexNum = (short)(row * resolution + col);
+            short topRightIndexNum = (short)(row * resolution + col + 1);
+            short bottomLeftIndexNum = (short)((row + 1) * resolution + col);
+            short bottomRightIndexNum = (short)((row + 1) * resolution + col + 1);
 
             this->indices.append(topLeftIndexNum);
             this->indices.append(bottomLeftIndexNum);
@@ -216,7 +226,7 @@ int Mesh::Max(QVector<char> data)
     int max = data[0];
     for (int i = 0; i < data.size(); i++)
     {
-        if(data[i] > max)
+        if (data[i] > max)
             max = data[i];
     }
 
@@ -228,31 +238,31 @@ int Mesh::Min(QVector<char> data)
     int min = data[0];
     for (int i = 0; i < data.size(); i++)
     {
-        if(data[i] < min)
+        if (data[i] < min)
             min = data[i];
     }
 
     return min;
 }
 
-void Mesh::ModifyTerrain(QVector<char> data)
+void Mesh::ModifyTerrain(QVector<int> data)
 {
-    for (int i=0; i<this->vertices.size(); i++) 
+    for (int i = 0; i < this->vertices.size(); i++)
     {
-        this->vertices[i].setY(data[i]/255.0f);
+        std::cout << data[i] / 255.0f << std::endl;
+        this->vertices[i].setY(data[i] / 255.0f);
     }
 }
 
-
 void Mesh::AddRandomNoise(float amplitude)
 {
-    for (auto& point : this->vertices) {
+    for (auto &point : this->vertices)
+    {
 
         std::random_device rd;
         std::default_random_engine generator(rd());
         std::uniform_real_distribution<double> distribution(-amplitude, amplitude);
 
         point.setY(distribution(generator));
-
     }
 }

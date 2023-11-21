@@ -18,6 +18,8 @@
 #include <QGraphicsOpacityEffect>
 #include <QLabel>
 #include <basics.h>
+#include <window.h>
+class Window;
 
 class Cartes : public QWidget
 {
@@ -32,6 +34,8 @@ public:
     QVector<char> localisation_constraint;
     QVector<char> values_constraint;
     QVector<char> laplacien;
+    QVector<char> hauteurs;
+    Window *w;
 
 signals:
 

@@ -5,7 +5,7 @@
 Cartes::Cartes(QWidget *parent)
     : QWidget{parent}
 {
-
+    w=(Window*) parent;  
     QVBoxLayout *MapContainerLayout = new QVBoxLayout;
     setLayout(MapContainerLayout);
     this->setFixedSize(QSize(120, 120));
@@ -62,7 +62,7 @@ Cartes::Cartes(QWidget *parent)
 
 void Cartes::initMap()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une carte", "", "Images (*.png *.jpg *.bmp *.ppm)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une carte", "", "Images (*.png *.jpg *.bmp *.ppm *.pgm)");
 
     if (!fileName.isEmpty())
     {
@@ -72,17 +72,22 @@ void Cartes::initMap()
         gradient->setPixmap(scaledPixmap);
         gradient->setAlignment(Qt::AlignCenter);
         QImage img = pixmap.toImage();
+        img = img.convertToFormat(QImage::Format_Grayscale8);
+
         QSize size_img = pixmap.size();
         taille_image = size_img;
         for (size_t i = 0; i < size_img.width(); i++)
         {
             for (size_t j = 0; j < size_img.height(); j++)
             {
-                localisation_constraint.append(qRed(img.pixel(i, j)));
-                values_constraint.append(qGreen(img.pixel(i, j)));
-                laplacien.append(qBlue(img.pixel(i, j)));
+                // localisation_constraint.append(qRed(img.pixel(i, j)));
+                // values_constraint.append(qGreen(img.pixel(i, j)));
+                // laplacien.append(qBlue(img.pixel(i, j)));
+                hauteurs.append((char)qGray(img.pixel(i, j)));
             }
         }
+        w->TerrainModif(fileName);
+
     }
 }
 

@@ -468,10 +468,7 @@ obj/cartes.o: cartes.cpp cartes.h \
 		vec.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/cartes.o cartes.cpp
 
-obj/main.o: main.cpp glwidget.h \
-		logo.h \
-		mesh.h \
-		mainwindow.h \
+obj/main.o: main.cpp mainwindow.h \
 		diffusionterrain.h \
 		basics.h \
 		vec.h

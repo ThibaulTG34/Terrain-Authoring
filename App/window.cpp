@@ -86,14 +86,12 @@ Window::Window(MainWindow *mw)
     glWidget = new GLWidget;
     container->setSpacing(20);
 
-   
-
     QVBoxLayout *ToolSide = new QVBoxLayout;
     QWidget *ToolSideContainer = new QWidget;
     ToolSideContainer->setLayout(ToolSide);
     ToolSideContainer->setFixedSize(120, 1000);
 
-    maps=new Cartes(this);
+    maps = new Cartes(this);
 
     container->addWidget(ToolSideContainer);
     container->addWidget(glWidget);
@@ -133,28 +131,27 @@ Window::Window(MainWindow *mw)
     ToolsLayout->setAlignment(tool3, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool4, Qt::AlignHCenter);
 
-
     setLayout(mainLayout);
 
     setWindowTitle(tr("Qt OpenGL"));
 
-    // load the different maps
-	ScalarField2D alpha("./004_mask.pgm"); // locations of fixed constraints (Dirichlet) /!\ 0 = fixed constraint, 1 = laplacian
-	alpha.NormalizeField();
-	ScalarField2D altitudes("./004_alt.pgm"); // values of fixed constraints (Dirichlet) where alpha = 0 (ignored on other locations)
-	altitudes.NormalizeField();
-	ScalarField2D laplacian("./004_lap.pgm"); // this contains the Laplacian, that can be calculated from the divergence of the gradient field
-	laplacian.AffineTransform(1.0f,-0.5f); // center to 0
-	laplacian.AffineTransform(0.03f); // adjust the strength of the Lapacian
+    // // load the different maps
+    // ScalarField2D alpha("./004_mask.pgm"); // locations of fixed constraints (Dirichlet) /!\ 0 = fixed constraint, 1 = laplacian
+    // alpha.NormalizeField();
+    // ScalarField2D altitudes("./004_alt.pgm"); // values of fixed constraints (Dirichlet) where alpha = 0 (ignored on other locations)
+    // altitudes.NormalizeField();
+    // ScalarField2D laplacian("./004_lap.pgm"); // this contains the Laplacian, that can be calculated from the divergence of the gradient field
+    // laplacian.AffineTransform(1.0f,-0.5f); // center to 0
+    // laplacian.AffineTransform(0.03f); // adjust the strength of the Lapacian
 
-    SimpleGeometricMultigridFloat diffusion(alpha, altitudes, laplacian);
-	// initialize the opengl shaders
-	diffusion.InitGL();
-	// execute the solver
-	diffusion.Solve();
-	// get the result and export it
-	ScalarField2D result = diffusion.GetResult();
-	result.SavePGM("./result.pgm");
+    // SimpleGeometricMultigridFloat diffusion(alpha, altitudes, laplacian);
+    // // initialize the opengl shaders
+    // diffusion.InitGL();
+    // // execute the solver
+    // diffusion.Solve();
+    // // get the result and export it
+    // ScalarField2D result = diffusion.GetResult();
+    // result.SavePGM("./result.pgm");
 }
 
 void Window::keyPressEvent(QKeyEvent *e)
@@ -167,6 +164,14 @@ void Window::keyPressEvent(QKeyEvent *e)
     if (e->key() == Qt::Key_W)
     {
         glWidget->wireframe = !glWidget->wireframe;
+    }
+
+    if(e->key() == Qt::Key_Plus){
+        glWidget->UpdateResolution(glWidget->getResolution()+1);
+    }
+
+    if(e->key() == Qt::Key_Minus){
+        glWidget->UpdateResolution(glWidget->getResolution()-1);
     }
 }
 
@@ -211,7 +216,7 @@ void Window::keyPressEvent(QKeyEvent *e)
 //                              else if (button4->isChecked())
 //                              {
 //                                  initRiver(pixmap);
-//                              }  
+//                              }
 //                              dialog.accept(); });
 
 //         dialog.exec();
@@ -240,4 +245,10 @@ void Window::initRiver(QPixmap p)
     QPixmap scaledPixmap = p.scaled(rivieres->size(), Qt::KeepAspectRatio);
     rivieres->setPixmap(scaledPixmap);
     rivieres->setAlignment(Qt::AlignCenter);
+}
+
+void Window::TerrainModif(QString imgname)
+{
+  
+    glWidget->UpdateTerrain(imgname);
 }

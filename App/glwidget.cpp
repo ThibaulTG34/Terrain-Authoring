@@ -162,6 +162,11 @@ void GLWidget::cleanup()
 
 void GLWidget::initializeGL()
 {
+
+    QOpenGLWidget::initializeGL();
+
+    // Initialize GLEW after OpenGL context is created
+
     // In this example the widget's corresponding top-level window can change
     // several times during the widget's lifetime. Whenever this happens, the
     // QOpenGLWidget's associated context is destroyed and a new one is created.
@@ -169,10 +174,11 @@ void GLWidget::initializeGL()
     // aboutToBeDestroyed() signal, instead of the destructor. The emission of
     // the signal will be followed by an invocation of initializeGL() where we
     // can recreate all resources.
+
     connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &GLWidget::cleanup);
 
     initializeOpenGLFunctions();
-    glClearColor(0, 0, 0, m_transparent ? 0 : 1);
+    glClearColor(0.8, 0.8, 0.8, m_transparent ? 0 : 1);
 
     m_program = new QOpenGLShaderProgram;
     // Compile vertex shader
@@ -185,6 +191,7 @@ void GLWidget::initializeGL()
 
     m_program->bindAttributeLocation("vertex", 0);
     m_program->bindAttributeLocation("normal", 1);
+    m_program->bindAttributeLocation("texture_coordonnees", 2);
 
     // Link shader pipeline
     if (!m_program->link())
@@ -197,6 +204,7 @@ void GLWidget::initializeGL()
     m_mvp_matrix_loc = m_program->uniformLocation("mvp_matrix");
     m_normal_matrix_loc = m_program->uniformLocation("normal_matrix");
     m_light_pos_loc = m_program->uniformLocation("light_position");
+    m_program->setUniformValue("ambiant_color", QVector4D(0.4, 0.4, 0.4, 1.0));
 
     // Create a vertex array object. In OpenGL ES 2.0 and OpenGL 2.x
     // implementations this is optional and support may not be present
@@ -215,36 +223,35 @@ void GLWidget::initializeGL()
     indexBuffer_.allocate(object.indices.constData(), object.indices.size() * sizeof(short));
     indexBuffer_.release();
 
+    m_texturebuffer.create();
+    m_texturebuffer.bind();
+    m_texturebuffer.allocate(object.uvs.constData(), sizeof(QVector2D) * object.uvs.size());
+    m_texturebuffer.release();
+
     vao_.bind();
     vertexBuffer_.bind();
     indexBuffer_.bind();
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+
+    m_texturebuffer.bind();
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
+
     vao_.release();
     // Store the vertex attribute bindings for the program.
     //    setupVertexAttribs();
 
     // Our camera never changes in this example.
     m_view.setToIdentity();
-    m_view.translate(0,0,-10);
+    m_view.translate(0, 0, -10);
     // m_view.rotate(45.0f, 1, 1, 0);
     // m_view.lookAt(cam_position, cam_position + cam_front, cam_up);
 
     // Light position is fixed.
-    m_program->setUniformValue(m_light_pos_loc, QVector3D(0, 0, 70));
+    m_program->setUniformValue(m_light_pos_loc, QVector3D(0, 0, 10));
 
     m_program->release();
-}
-
-void GLWidget::setupVertexAttribs()
-{
-    indexBuffer_.bind();
-    QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
-    f->glEnableVertexAttribArray(0);
-    f->glEnableVertexAttribArray(1);
-    f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    f->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
-    indexBuffer_.release();
 }
 
 void GLWidget::paintGL()
@@ -275,9 +282,25 @@ void GLWidget::paintGL()
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+    // ---- Heightmap -----
+    // glActiveTexture(GL_TEXTURE0);
+    // // glBindTexture(GL_TEXTURE_2D, heightmap);
+    // // glUniform1i(glGetUniformLocation(m_program, "heightmap"), 3);
+    if (hm_active)
+    {
+        // GLuint heightmapLocation = m_program->uniformLocation("heightmap");
+        // // std::cout << "heightmapLocation = "<< heightmapLocation << std::endl;
+        // if (heightmapLocation != -1)
+        // {
+        //     glUniform1i(heightmapLocation, 0); // 0 représente l'unité de texture à utiliser
+        //     glBindTexture(GL_TEXTURE_2D, heightmap);
+        // }
+        hmap->bind();
+    }
     update();
 
     vao_.bind();
+
     glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_SHORT, (void *)0);
 
     vao_.release();
@@ -375,26 +398,82 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void GLWidget::UpdateResolution(int res)
 {
-    object.CreateFlatTerrain(res);
+    if (res >= 2)
+    {
+        object.CreateFlatTerrain(1, res);
+        object.setResolution(res);
+        // std::cout << vertices.size() << std::endl;
 
-    vertexBuffer_.bind();
-    vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
-    vertexBuffer_.release();
+        vertexBuffer_.bind();
+        vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
+        vertexBuffer_.release();
 
-    indexBuffer_.bind();
-    indexBuffer_.allocate(object.indices.constData(), object.indices.size() * sizeof(short));
-    indexBuffer_.release();
+        indexBuffer_.bind();
+        indexBuffer_.allocate(object.indices.constData(), object.indices.size() * sizeof(short));
+        indexBuffer_.release();
+
+        m_texturebuffer.bind();
+        m_texturebuffer.allocate(object.uvs.constData(), object.uvs.size() * sizeof(QVector2D));
+        m_texturebuffer.release();
+    }
 }
 
-void GLWidget::UpdateTerrain(QVector<char> data)
+void GLWidget::UpdateTerrain(QString imgname)
 {
-    object.ModifyTerrain(data);
+    // GLuint heightmap;
+    // glGenTextures(1, &heightmap);
+    // glBindTexture(GL_TEXTURE_2D, heightmap);
 
-    vertexBuffer_.bind();
-    vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
-    vertexBuffer_.release();
+    // int width = 0;
+    // int height = 0;
+    // int channels = 3;
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    // glGenerateMipmap(GL_TEXTURE_2D);
+    // setDefaultTexture2DParameters(heightmap);
 
-    indexBuffer_.bind();
-    indexBuffer_.allocate(object.indices.constData(), object.indices.size() * sizeof(short));
-    indexBuffer_.release();
+    // glGenTextures(1, &heightmap);
+    // glBindTexture(GL_TEXTURE_2D, heightmap);
+
+    // int width = 0;
+    // int height = 0;
+    // int channels = 3;
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)data.constData());
+    // glGenerateMipmap(GL_TEXTURE_2D);
+
+    // // Utilisez une fonction séparée pour configurer les paramètres par défaut de la texture
+    // // f->setDefaultTexture2DParameters(f, heightmap);
+
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, heightmap);
+
+    // object.ModifyTerrain(data);
+
+    // vertexBuffer_.bind();
+    // vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
+    // vertexBuffer_.release();
+
+    // indexBuffer_.bind();
+    // indexBuffer_.allocate(object.indices.constData(), object.indices.size() * sizeof(short));
+    // indexBuffer_.release();
+    QImage img = QImage(imgname);
+
+    // glEnableVertexAttribArray(2);
+    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
+
+    // for (size_t i = 0; i < img.width(); i++)
+    // {
+    //     for (size_t j = 0; j < img.height(); j++)
+    //     {
+    //     std::cout << qGray(img.pixel(i,j)) << std::endl;
+
+    //     }
+    // }
+    hmap = new QOpenGLTexture(img);
+
+    hm_active = true;
+}
+
+int GLWidget::getResolution()
+{
+    return object.getResolution();
 }

@@ -138,7 +138,7 @@ void SimpleGeometricMultigridFloat::InitGL()
   char * chaine = const_cast<char*>(definitions.c_str());
   shaderStepAtoB = read_program("./shader/mgstepfloat.glsl", chaine);
   std::cerr << "Compute shader loaded!" << std::endl;
-
+  
   // create buffers
   int GPUsize = 0;
   glbufferAlpha = new GLuint[mgsize];

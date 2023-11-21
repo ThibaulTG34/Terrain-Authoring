@@ -61,7 +61,7 @@
 #include <QMatrix4x4>
 #include "logo.h"
 #include "mesh.h"
-
+#include <QOpenGLTexture>
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
@@ -80,7 +80,8 @@ public:
     Mesh object;
     void loadOFF(std::string file);
     void UpdateResolution(int res);
-    void UpdateTerrain(QVector<char> data);
+    void UpdateTerrain(QString imgname);
+    int getResolution();
 
     bool wireframe;
 
@@ -108,7 +109,6 @@ protected:
 
 private:
     void setupVertexAttribs();
-
     bool m_core;
     int m_xRot;
     int m_yRot;
@@ -122,6 +122,10 @@ private:
     QMatrix4x4 m_view;
     QMatrix4x4 m_model;
     static bool m_transparent;
+
+    bool hm_active = false;
+    GLuint heightmap;
+    QOpenGLTexture* hmap;
 
     bool mouseMovePressed = false;
     bool mouseRotatePressed = false;
@@ -138,6 +142,7 @@ private:
     QOpenGLVertexArrayObject vao_;
     QOpenGLBuffer vertexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     QOpenGLBuffer indexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+    QOpenGLBuffer m_texturebuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 };
 
 #endif
