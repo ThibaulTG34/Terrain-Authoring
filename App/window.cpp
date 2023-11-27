@@ -84,12 +84,30 @@ Window::Window(MainWindow *mw)
     mainLayout->addWidget(w);
 
     glWidget = new GLWidget;
+    QObject::connect(glWidget, &GLWidget::UpdateFPS, this, &Window::ChangeFPS);
+
     container->setSpacing(20);
 
     QVBoxLayout *ToolSide = new QVBoxLayout;
     QWidget *ToolSideContainer = new QWidget;
     ToolSideContainer->setLayout(ToolSide);
-    ToolSideContainer->setFixedSize(120, 1000);
+
+    FPS = new QLabel();
+    FPS->setText("FPS: --");
+    FPS->setFixedSize(100, 40);
+    FPS->setStyleSheet("font-size: 16pt;");
+
+    ToolSide->addWidget(FPS);
+    ToolSide->setAlignment(FPS, Qt::AlignTop);
+    ToolSideContainer->setStyleSheet("padding: 0 ; margin: 0;");
+    ToolSideContainer->setFixedSize(120, 600);
+
+    QWidget *BackgroundTools = new QWidget();
+    BackgroundTools->setFixedSize(QSize(100, 500));
+    BackgroundTools->setStyleSheet("background-color: lightgrey;border-radius:20px;");
+    ToolSide->addWidget(BackgroundTools);
+    ToolSide->setAlignment(BackgroundTools, Qt::AlignTop);
+    ToolSide->setSpacing(0);
 
     maps = new Cartes(this);
 
@@ -99,21 +117,24 @@ Window::Window(MainWindow *mw)
     container->setAlignment(ToolSideContainer, Qt::AlignVCenter);
     container->setAlignment(maps, Qt::AlignVCenter);
 
-    QWidget *BackgroundTools = new QWidget();
-    BackgroundTools->setFixedSize(QSize(100, 840));
-    BackgroundTools->setStyleSheet("background-color: lightgrey;border-radius:20px;");
-    ToolSide->addWidget(BackgroundTools);
-    ToolSide->setAlignment(BackgroundTools, Qt::AlignCenter);
-
     tool1 = new QPushButton();
     tool1->setFixedSize(QSize(40, 40));
     tool1->setStyleSheet("background-color:grey");
+    QIcon icon("./hand.png");
+    tool1->setIcon(icon);
+    tool1->setIconSize(QSize(30, 30));
+    connect(tool1, &QPushButton::clicked, glWidget, &GLWidget::Hand_Tool);
+    
+
     tool2 = new QPushButton();
     tool2->setFixedSize(QSize(40, 40));
     tool2->setStyleSheet("background-color:grey");
+    connect(tool2, &QPushButton::clicked, glWidget, &GLWidget::DrawCircle);
+  
     tool3 = new QPushButton();
     tool3->setFixedSize(QSize(40, 40));
     tool3->setStyleSheet("background-color:grey");
+
     tool4 = new QPushButton();
     tool4->setFixedSize(QSize(40, 40));
     tool4->setStyleSheet("background-color:grey");
@@ -134,24 +155,6 @@ Window::Window(MainWindow *mw)
     setLayout(mainLayout);
 
     setWindowTitle(tr("Qt OpenGL"));
-
-    // // load the different maps
-    // ScalarField2D alpha("./004_mask.pgm"); // locations of fixed constraints (Dirichlet) /!\ 0 = fixed constraint, 1 = laplacian
-    // alpha.NormalizeField();
-    // ScalarField2D altitudes("./004_alt.pgm"); // values of fixed constraints (Dirichlet) where alpha = 0 (ignored on other locations)
-    // altitudes.NormalizeField();
-    // ScalarField2D laplacian("./004_lap.pgm"); // this contains the Laplacian, that can be calculated from the divergence of the gradient field
-    // laplacian.AffineTransform(1.0f,-0.5f); // center to 0
-    // laplacian.AffineTransform(0.03f); // adjust the strength of the Lapacian
-
-    // SimpleGeometricMultigridFloat diffusion(alpha, altitudes, laplacian);
-    // // initialize the opengl shaders
-    // diffusion.InitGL();
-    // // execute the solver
-    // diffusion.Solve();
-    // // get the result and export it
-    // ScalarField2D result = diffusion.GetResult();
-    // result.SavePGM("./result.pgm");
 }
 
 void Window::keyPressEvent(QKeyEvent *e)
@@ -166,62 +169,34 @@ void Window::keyPressEvent(QKeyEvent *e)
         glWidget->wireframe = !glWidget->wireframe;
     }
 
-    if(e->key() == Qt::Key_Plus){
-        glWidget->UpdateResolution(glWidget->getResolution()+1);
+    if (e->key() == Qt::Key_Plus)
+    {
+        glWidget->UpdateResolution(glWidget->getResolution() + 1);
     }
 
-    if(e->key() == Qt::Key_Minus){
-        glWidget->UpdateResolution(glWidget->getResolution()-1);
+    if (e->key() == Qt::Key_Minus)
+    {
+        glWidget->UpdateResolution(glWidget->getResolution() - 1);
     }
+
+    if(e->key() == Qt::Key_P)
+    {
+        glWidget->mode_pres = !glWidget->mode_pres;
+        glWidget->angle_speed = 0.15;
+    }
+
+    if(e->key() == Qt::Key_G)
+    {
+        glWidget->angle_speed += 0.02;
+    }
+
+    if(e->key() == Qt::Key_B)
+    {
+        glWidget->angle_speed -= 0.02;
+    }
+
+
 }
-
-// void Window::getPicture()
-// {
-//     QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une image", "", "Images (*.png *.jpg *.bmp)");
-
-//     if (!fileName.isEmpty())
-//     {
-//         QPixmap pixmap(fileName);
-//         QDialog dialog;
-//         dialog.setWindowTitle("Saisie d'informations");
-
-//         // Layout pour organiser les widgets
-//         QVBoxLayout layout(&dialog);
-//         QRadioButton *button1 = new QRadioButton("Gradient", &dialog);
-//         QRadioButton *button2 = new QRadioButton("Texture", &dialog);
-//         QRadioButton *button3 = new QRadioButton("Crêtes", &dialog);
-//         QRadioButton *button4 = new QRadioButton("Rivières", &dialog);
-//         layout.addWidget(button1);
-//         layout.addWidget(button2);
-//         layout.addWidget(button3);
-//         layout.addWidget(button4);
-
-//         QPushButton buttonOK("OK");
-//         layout.addWidget(&buttonOK);
-//         // Gestionnaire de signaux pour le bouton "OK"
-//         QObject::connect(&buttonOK, &QPushButton::clicked, [&]()
-//                          {
-//                              if (button1->isChecked())
-//                              {
-//                                  initGradient();
-//                              }
-//                              else if (button2->isChecked())
-//                              {
-//                                  initTexture(pixmap);
-//                              }
-//                              else if (button3->isChecked())
-//                              {
-//                                  initRidge(pixmap);
-//                              }
-//                              else if (button4->isChecked())
-//                              {
-//                                  initRiver(pixmap);
-//                              }
-//                              dialog.accept(); });
-
-//         dialog.exec();
-//     }
-// }
 
 void Window::initTexture(QPixmap p)
 {
@@ -249,6 +224,15 @@ void Window::initRiver(QPixmap p)
 
 void Window::TerrainModif(QString imgname)
 {
-  
     glWidget->UpdateTerrain(imgname);
+}
+
+void Window::BiomeModif(QString imgname)
+{
+    glWidget->UpdateBiome(imgname);
+}
+
+void Window::ChangeFPS(int fps)
+{
+    FPS->setText(QString("FPS:%1").arg(fps));
 }

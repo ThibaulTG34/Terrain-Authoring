@@ -12,16 +12,6 @@ Cartes::Cartes(QWidget *parent)
     MapContainerLayout->setSpacing(50);
 
 
-    QPushButton *import = new QPushButton();
-    import->setFixedSize(QSize(100, 40));
-    import->setContentsMargins(0, 0, 0, 0);
-    import->setStyleSheet("padding: 0 ; margin: 0;");
-    QIcon icon("./import.png");
-    import->setIcon(icon);
-    import->setIconSize(QSize(20, 20));
-    connect(import, &QPushButton::clicked, this, &Cartes::initMap);
-    MapContainerLayout->addWidget(import);
-
 
     QVBoxLayout *mapSide = new QVBoxLayout;
     QWidget *mapSideContainer = new QWidget;
@@ -30,19 +20,60 @@ Cartes::Cartes(QWidget *parent)
 
     MapContainerLayout->addWidget(mapSideContainer);
 
+
+/////////////////// Gradient ///////////////////////////
+    QVBoxLayout *gradientSide = new QVBoxLayout;
+    QWidget *gradientSideContainer = new QWidget;
+    gradientSideContainer->setLayout(gradientSide);
+    this->setFixedSize(120, 1000);
+
+    mapSide->addWidget(gradientSideContainer);
+
+    QPushButton *import = new QPushButton();
+    import->setFixedSize(QSize(100, 40));
+    import->setContentsMargins(0, 0, 0, 0);
+    import->setStyleSheet("padding: 0 ; margin: 0;");
+    QIcon icon("./import.png");
+    import->setIcon(icon);
+    import->setIconSize(QSize(20, 20));
+    connect(import, &QPushButton::clicked, this, &Cartes::initMap);
+    gradientSide->addWidget(import);
+
     gradient = new QLabel(this);
     gradient->setStyleSheet("background-color: black;");
     gradient->setFixedSize(QSize(122, 80));
-    mapSide->addWidget(gradient);
-    mapSide->setAlignment(gradient, Qt::AlignTop);
-    mapSide->setContentsMargins(0, 0, 0, 0);
+    gradientSide->addWidget(gradient);
+    gradientSide->setAlignment(gradient, Qt::AlignTop);
+    gradientSide->setContentsMargins(0, 0, 0, 0);
+//////////////////////////////////////////////////////////
+
+
+////////////////// Texture--Biome ////////////////////////
+    QVBoxLayout *textureSide = new QVBoxLayout;
+    QWidget *textureSideContainer = new QWidget;
+    textureSideContainer->setLayout(textureSide);
+    this->setFixedSize(120, 1000);
+
+    mapSide->addWidget(textureSideContainer);
+
+    QPushButton *import2 = new QPushButton();
+    import2->setFixedSize(QSize(100, 40));
+    import2->setContentsMargins(0, 0, 0, 0);
+    import2->setStyleSheet("padding: 0 ; margin: 0;");
+    QIcon icon2("./import.png");
+    import2->setIcon(icon2);
+    import2->setIconSize(QSize(20, 20));
+    connect(import2, &QPushButton::clicked, this, &Cartes::initMapBiome);
+    textureSide->addWidget(import2);
 
     texture = new QLabel(this);
     texture->setStyleSheet("background-color: red;");
     texture->setFixedSize(QSize(122, 80));
-    mapSide->addWidget(texture);
-    mapSide->setAlignment(texture, Qt::AlignTop);
-    mapSide->setContentsMargins(0, 0, 0, 0);
+    textureSide->addWidget(texture);
+    textureSide->setAlignment(texture, Qt::AlignTop);
+    textureSide->setContentsMargins(0, 0, 0, 0);
+////////////////////////////////////////////////////////////
+
 
     cretes = new QLabel(this);
     cretes->setStyleSheet("background-color: green;");
@@ -87,6 +118,35 @@ void Cartes::initMap()
             }
         }
         w->TerrainModif(fileName);
+
+    }
+}
+
+
+void Cartes::initMapBiome()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une carte", "", "Images (*.png *.jpg *.bmp *.ppm *.pgm)");
+
+    if (!fileName.isEmpty())
+    {
+        QPixmap pixmap(fileName);
+        texture->setStyleSheet("background-color: transparent;");
+        QPixmap scaledPixmap = pixmap.scaled(texture->size(), Qt::KeepAspectRatio);
+        texture->setPixmap(scaledPixmap);
+        texture->setAlignment(Qt::AlignCenter);
+        QImage img = pixmap.toImage();
+        img = img.convertToFormat(QImage::Format_Grayscale8);
+
+        QSize size_img = pixmap.size();
+        taille_image = size_img;
+        for (size_t i = 0; i < size_img.width(); i++)
+        {
+            for (size_t j = 0; j < size_img.height(); j++)
+            {
+                biomes.append((char)qGray(img.pixel(i, j)));
+            }
+        }
+        w->BiomeModif(fileName);
 
     }
 }

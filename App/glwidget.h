@@ -50,10 +50,12 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glext.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #ifndef GLWIDGET_H
 #define GLWIDGET_H
-
+#include <iostream>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QOpenGLVertexArrayObject>
@@ -62,6 +64,10 @@
 #include "logo.h"
 #include "mesh.h"
 #include <QOpenGLTexture>
+#include <QTime>
+#include <QTimer>
+#include <QCursor>
+
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
@@ -81,9 +87,20 @@ public:
     void loadOFF(std::string file);
     void UpdateResolution(int res);
     void UpdateTerrain(QString imgname);
+    void UpdateBiome(QString imgname);
+
     int getResolution();
 
     bool wireframe;
+    bool tool_active;
+    bool mode_pres;
+
+    float angle_speed;
+
+    QTimer timer;
+    QTime last_time;
+    int last_count;
+    int frame_count;
 
 public slots:
     // Completer : ajouter des slots pour signaler appliquer le changement de rotation
@@ -91,6 +108,8 @@ public slots:
     void setYRotation(int angle);
     void setZRotation(int angle);
     void cleanup();
+    void DrawCircle();
+    void Hand_Tool();
 
 signals:
 
@@ -98,6 +117,7 @@ signals:
     void objectRotChangeOnX(int angle);
     void objectRotChangeOnY(int angle);
     void objectRotChangeOnZ(int angle);
+    void UpdateFPS(int newFPS);
 
 protected:
     void initializeGL() override;
@@ -105,10 +125,39 @@ protected:
     void resizeGL(int width, int height) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
-    void WheelEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event) override
+    {
+        // Lorsque le clic de souris est relâché, restaurer le curseur par défaut
+        if (!tool_active)
+        {
+            QPixmap customCursorPixmap("./drag.png");
+            QCursor customCursor(customCursorPixmap);
+            setCursor(customCursor);
+        }
+
+        // Appel de la fonction de la classe de base pour traiter l'événement
+        QWidget::mouseReleaseEvent(event);
+    }
+    void WheelEvent(QWheelEvent *event);
+    void enterEvent(QEvent *event) override
+    {
+        if (!tool_active)
+        {
+            QPixmap customCursorPixmap("./drag.png");
+            QCursor customCursor(customCursorPixmap);
+            setCursor(customCursor);
+        }
+
+    }
+
+    void leaveEvent(QEvent *event) override
+    {
+        setCursor(Qt::ArrowCursor);
+    }
 
 private:
     void setupVertexAttribs();
+    glm::vec3 GetWorldPosition();
     bool m_core;
     int m_xRot;
     int m_yRot;
@@ -123,10 +172,12 @@ private:
     QMatrix4x4 m_model;
     static bool m_transparent;
 
-    bool hm_active = false;
-    GLuint heightmap;
-    QOpenGLTexture* hmap;
+    int mouseX, mouseY;
 
+    bool hm_active = false;
+    QOpenGLTexture *hmap;
+
+    bool biome_active = false;
     bool mouseMovePressed = false;
     bool mouseRotatePressed = false;
     bool mouseZoomPressed = false;
@@ -138,11 +189,14 @@ private:
     QVector3D cam_front;
     QVector3D cam_up;
 
+    QVector<QVector2D> biome_data;
 
     QOpenGLVertexArrayObject vao_;
     QOpenGLBuffer vertexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     QOpenGLBuffer indexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
     QOpenGLBuffer m_texturebuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+
+    QOpenGLBuffer m_biomebuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 };
 
 #endif

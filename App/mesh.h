@@ -21,6 +21,7 @@ public:
     void ModifyTerrain(QVector<int> data);
     int getResolution();
     void setResolution(int r);
+    void DrawCircle(float cx, float cy, float r, int num_segments);
 
 
 private:

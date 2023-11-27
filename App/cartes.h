@@ -31,10 +31,8 @@ public:
     QLabel *texture;
     QLabel *cretes;
     QLabel *rivieres;
-    QVector<char> localisation_constraint;
-    QVector<char> values_constraint;
-    QVector<char> laplacien;
     QVector<char> hauteurs;
+    QVector<char> biomes;
     Window *w;
 
 signals:
@@ -43,6 +41,7 @@ signals:
 
 public slots:
     void initMap();
+    void initMapBiome();
 };
 
 #endif // CARTE_H

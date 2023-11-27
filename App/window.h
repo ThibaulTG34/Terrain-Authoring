@@ -73,6 +73,8 @@ class Window : public QWidget
 public:
     Window(MainWindow *mw);
     void TerrainModif(QString hauteurs);
+    void BiomeModif(QString hauteurs);
+    QLabel *FPS;
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -82,6 +84,7 @@ public slots:
     void initTexture(QPixmap p);
     void initRidge(QPixmap p);
     void initRiver(QPixmap p);
+    void ChangeFPS(int fps);
 
 private:
     GLWidget *glWidget;
@@ -92,6 +95,7 @@ private:
     QPushButton *tool4;
 
     Cartes *maps;
+
 
     QLabel *texture;
     QVector<QVector3D> texture_data;

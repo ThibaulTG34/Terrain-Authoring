@@ -189,9 +189,9 @@ void Mesh::CreateFlatTerrain(int taille, int resolution)
     {
         for (int j = 0; j < resolution; j++)
         {
-            float x = (float)(taille * i) / (float)(resolution - 1) - 1.f;
+            float x = (float)(taille * i) / (float)(resolution - 1) - taille/2.0;
             float y = 0;
-            float z = (float)(taille * j) / (float)(resolution - 1) - 1.f;
+            float z = (float)(taille * j) / (float)(resolution - 1) - taille/2.0;
 
             this->vertices.append(QVector3D(x, y, z));
 
@@ -266,3 +266,5 @@ void Mesh::AddRandomNoise(float amplitude)
         point.setY(distribution(generator));
     }
 }
+
+

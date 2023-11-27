@@ -75,6 +75,12 @@ GLWidget::GLWidget(QWidget *parent)
     }
 
     wireframe = false;
+    tool_active = false;
+
+    timer.start(20);
+    frame_count = 0;
+    last_count = 0;
+    last_time = QTime::currentTime();
 }
 
 GLWidget::~GLWidget()
@@ -144,7 +150,6 @@ void GLWidget::setZRotation(int angle)
         m_zRot = angle;
         // Completer pour emettre un signal
         emit objectRotChangeOnZ(angle);
-
         update();
     }
 }
@@ -165,16 +170,6 @@ void GLWidget::initializeGL()
 
     QOpenGLWidget::initializeGL();
 
-    // Initialize GLEW after OpenGL context is created
-
-    // In this example the widget's corresponding top-level window can change
-    // several times during the widget's lifetime. Whenever this happens, the
-    // QOpenGLWidget's associated context is destroyed and a new one is created.
-    // Therefore we have to be prepared to clean up the resources on the
-    // aboutToBeDestroyed() signal, instead of the destructor. The emission of
-    // the signal will be followed by an invocation of initializeGL() where we
-    // can recreate all resources.
-
     connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &GLWidget::cleanup);
 
     initializeOpenGLFunctions();
@@ -192,6 +187,7 @@ void GLWidget::initializeGL()
     m_program->bindAttributeLocation("vertex", 0);
     m_program->bindAttributeLocation("normal", 1);
     m_program->bindAttributeLocation("texture_coordonnees", 2);
+    m_program->bindAttributeLocation("biome", 3);
 
     // Link shader pipeline
     if (!m_program->link())
@@ -206,10 +202,6 @@ void GLWidget::initializeGL()
     m_light_pos_loc = m_program->uniformLocation("light_position");
     m_program->setUniformValue("ambiant_color", QVector4D(0.4, 0.4, 0.4, 1.0));
 
-    // Create a vertex array object. In OpenGL ES 2.0 and OpenGL 2.x
-    // implementations this is optional and support may not be present
-    // at all. Nonetheless the below code works in all cases and makes
-    // sure there is a VAO when one is needed.
     vao_.create();
     QOpenGLVertexArrayObject::Binder vaoBinder(&vao_);
 
@@ -228,6 +220,13 @@ void GLWidget::initializeGL()
     m_texturebuffer.allocate(object.uvs.constData(), sizeof(QVector2D) * object.uvs.size());
     m_texturebuffer.release();
 
+    m_biomebuffer.create();
+    m_biomebuffer.bind();
+    m_biomebuffer.allocate(biome_data.constData(), sizeof(QVector2D) * biome_data.size());
+    m_biomebuffer.release();
+
+    resizeGL(16, 9);
+
     vao_.bind();
     vertexBuffer_.bind();
     indexBuffer_.bind();
@@ -238,15 +237,15 @@ void GLWidget::initializeGL()
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
 
-    vao_.release();
-    // Store the vertex attribute bindings for the program.
-    //    setupVertexAttribs();
+    m_biomebuffer.bind();
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
 
-    // Our camera never changes in this example.
+    vao_.release();
+
     m_view.setToIdentity();
-    m_view.translate(0, 0, -10);
-    // m_view.rotate(45.0f, 1, 1, 0);
-    // m_view.lookAt(cam_position, cam_position + cam_front, cam_up);
+    m_view.translate(0.2, 0.15, -3);
+    m_view.rotate(35.0f, 1, 1, 0);
 
     // Light position is fixed.
     m_program->setUniformValue(m_light_pos_loc, QVector3D(0, 0, 10));
@@ -260,10 +259,10 @@ void GLWidget::paintGL()
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
-    m_model.setToIdentity();
-    m_model.rotate(180.0f - (m_xRot / 16.0f), 1, 0, 0);
-    m_model.rotate(m_yRot / 16.0f, 0, 1, 0);
-    m_model.rotate(m_zRot / 16.0f, 0, 0, 1);
+    // m_model.setToIdentity();
+    // m_model.rotate(180.0f - (m_xRot / 16.0f), 1, 0, 0);
+    // m_model.rotate(m_yRot / 16.0f, 0, 1, 0);
+    // m_model.rotate(m_zRot / 16.0f, 0, 0, 1);
 
     QOpenGLVertexArrayObject::Binder vaoBinder(&vao_);
     m_program->bind();
@@ -275,28 +274,53 @@ void GLWidget::paintGL()
     // Set normal matrix
     m_program->setUniformValue(m_normal_matrix_loc, normal_matrix);
 
-    //    glDrawArrays(GL_TRIANGLES, 0, object.vertices.size());
-
     if (wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    // ---- Heightmap -----
-    // glActiveTexture(GL_TEXTURE0);
-    // // glBindTexture(GL_TEXTURE_2D, heightmap);
-    // // glUniform1i(glGetUniformLocation(m_program, "heightmap"), 3);
+    m_program->bind();
+
     if (hm_active)
     {
-        // GLuint heightmapLocation = m_program->uniformLocation("heightmap");
-        // // std::cout << "heightmapLocation = "<< heightmapLocation << std::endl;
-        // if (heightmapLocation != -1)
-        // {
-        //     glUniform1i(heightmapLocation, 0); // 0 représente l'unité de texture à utiliser
-        //     glBindTexture(GL_TEXTURE_2D, heightmap);
-        // }
+        glActiveTexture(GL_TEXTURE0);
         hmap->bind();
+        m_program->setUniformValue("heightmap", 0);
     }
+
+    
+    // ---------- Compute FPS ---------
+    ++frame_count;
+    QTime new_time = QTime::currentTime();
+    if (last_time.msecsTo(new_time) >= 1000)
+    {
+        last_count = frame_count;
+        frame_count = 0;
+        last_time = QTime::currentTime();
+    }
+    // -------------------------------
+
+    if (mode_pres)
+    {
+        m_view.rotate(angle_speed, 0, 1, 0);
+        // m_projection.perspective(glm::radians(45.0f), (4.0f / 3.0f), 0.01f, 100.0f);
+        // m_view.lookAt(QVector3D(0, 0, -3), QVector3D(0, 0, 0), QVector3D(0, 1, 0));
+    }
+
+
+    glm::vec3 worldPosition = GetWorldPosition();
+    // if (tool_active)
+    // {
+    m_program->setUniformValue(m_program->uniformLocation("radius"), 0.3f);
+    m_program->setUniformValue(m_program->uniformLocation("center"), QVector3D(worldPosition.x, 0, worldPosition.z));
+    m_program->setUniformValue(m_program->uniformLocation("tool_active"), tool_active);
+    // }
+
+    // if(biome_active)
+    // {
+    //     m_program->setUniformValue(m_program->uniformLocation("biomes"), biomes);
+    // }
+
     update();
 
     vao_.bind();
@@ -306,6 +330,13 @@ void GLWidget::paintGL()
     vao_.release();
 
     m_program->release();
+    if (hm_active)
+    {
+        hmap->release();
+    }
+
+
+    emit UpdateFPS(last_count);
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -317,14 +348,27 @@ void GLWidget::resizeGL(int w, int h)
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
     m_last_position = event->pos();
+
     if (event->button() == Qt::LeftButton)
     {
+        if (!tool_active)
+        {
+            QPixmap customCursorPixmap("./dragClick.png");
+            QCursor customCursor(customCursorPixmap);
+            setCursor(customCursor);
+        }
         mouseMovePressed = false;
         mouseRotatePressed = true;
         mouseZoomPressed = false;
     }
     else if (event->button() == Qt::RightButton)
     {
+        if (!tool_active)
+        {
+            QPixmap customCursorPixmap("./deplacer.png");
+            QCursor customCursor(customCursorPixmap);
+            setCursor(customCursor);
+        }
         lastX = event->x();
         lastY = event->y();
         mouseMovePressed = true;
@@ -343,56 +387,43 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
     }
 }
 
-// void GLWidget::WheelEvent(QMouseEvent *event)
-// {
-//     lastZoom = event->y();
-//     mouseMovePressed = false;
-//     mouseRotatePressed = false;
-//     mouseZoomPressed = true;
-// }
-
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
     int dx = event->x() - m_last_position.x();
     int dy = event->y() - m_last_position.y();
 
-    // if (event->buttons() & Qt::LeftButton)
-    // {
-    //     setXRotation(m_xRot + 8 * dy);
-    //     setYRotation(m_yRot + 8 * dx);
-    // }
-    // else if (event->buttons() & Qt::RightButton)
-    // {
-    //     setXRotation(m_xRot + 8 * dy);
-    //     setZRotation(m_zRot + 8 * dx);
-    // }
-    // m_last_position = event->pos();
-
-    int x = event->x();
-    int y = event->y();
-
-    if (mouseRotatePressed)
+    if (!tool_active)
     {
-        setXRotation(m_xRot + 5 * dy);
-        setYRotation(m_yRot + 5 * dx);
-    }
-    else if (mouseMovePressed)
-    {
-        int deltaX = x - lastX;
-        int deltaY = y - lastY;
+        mouseX = event->x();
+        mouseY = event->y();
 
-        m_view.translate(deltaX * 0.01, deltaY * 0.01, 0);
+        if (mouseRotatePressed)
+        {
+            // setXRotation(m_xRot + dx);
+            // setYRotation(m_yRot + dy);
+            m_view.rotate(m_xRot + 0.004 * dy, 1, 0, 0);
+            m_view.rotate(m_yRot + 0.004 * dx, 0, 1, 0);
+        }
+        else if (mouseMovePressed)
+        {
+            int deltaX = mouseX - lastX;
+            int deltaY = mouseY - lastY;
 
-        lastX = x;
-        lastY = y;
-    }
-    else if (mouseZoomPressed)
-    {
-        int deltaZoom = y - lastZoom;
+            m_view.translate(deltaX * 0.001, -deltaY * 0.001, 0);
 
-        m_view.translate(0, 0.f, deltaZoom * 0.02f);
+            lastX = mouseX;
+            lastY = mouseY;
+        }
+        else if (mouseZoomPressed)
+        {
 
-        lastZoom = y;
+            int deltaZoom = mouseY - lastZoom;
+
+            m_view.translate(0.f, 0.f, deltaZoom * 0.02f);
+
+            lastZoom = mouseY;
+            update();
+        }
     }
 }
 
@@ -402,7 +433,6 @@ void GLWidget::UpdateResolution(int res)
     {
         object.CreateFlatTerrain(1, res);
         object.setResolution(res);
-        // std::cout << vertices.size() << std::endl;
 
         vertexBuffer_.bind();
         vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
@@ -420,60 +450,77 @@ void GLWidget::UpdateResolution(int res)
 
 void GLWidget::UpdateTerrain(QString imgname)
 {
-    // GLuint heightmap;
-    // glGenTextures(1, &heightmap);
-    // glBindTexture(GL_TEXTURE_2D, heightmap);
-
-    // int width = 0;
-    // int height = 0;
-    // int channels = 3;
-    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    // glGenerateMipmap(GL_TEXTURE_2D);
-    // setDefaultTexture2DParameters(heightmap);
-
-    // glGenTextures(1, &heightmap);
-    // glBindTexture(GL_TEXTURE_2D, heightmap);
-
-    // int width = 0;
-    // int height = 0;
-    // int channels = 3;
-    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)data.constData());
-    // glGenerateMipmap(GL_TEXTURE_2D);
-
-    // // Utilisez une fonction séparée pour configurer les paramètres par défaut de la texture
-    // // f->setDefaultTexture2DParameters(f, heightmap);
-
-    // glActiveTexture(GL_TEXTURE0);
-    // glBindTexture(GL_TEXTURE_2D, heightmap);
-
-    // object.ModifyTerrain(data);
-
-    // vertexBuffer_.bind();
-    // vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
-    // vertexBuffer_.release();
-
-    // indexBuffer_.bind();
-    // indexBuffer_.allocate(object.indices.constData(), object.indices.size() * sizeof(short));
-    // indexBuffer_.release();
     QImage img = QImage(imgname);
-
-    // glEnableVertexAttribArray(2);
-    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
-
-    // for (size_t i = 0; i < img.width(); i++)
-    // {
-    //     for (size_t j = 0; j < img.height(); j++)
-    //     {
-    //     std::cout << qGray(img.pixel(i,j)) << std::endl;
-
-    //     }
-    // }
     hmap = new QOpenGLTexture(img);
-
     hm_active = true;
+}
+
+/**
+- jaune (desert) = 215
+- vert (herbe) = 1
+- rouge (canyon) = 87
+- blanc (neige) = 3
+*/
+void GLWidget::UpdateBiome(QString imgname)
+{
+    biome_data.clear();
+
+    QImage img = QImage(imgname);
+    img = img.convertToFormat(QImage::Format_Grayscale8);
+std::cout << img.width()<<" "<<  img.height()<< std::endl;
+    for (size_t i = 0; i < img.width(); i++)
+    {
+        for (size_t j = 0; j < img.height(); j++)
+        {
+            int v = (int)qGray(img.pixel(i, j));
+            
+            // if (i == 0 && j == 0)
+            //     std::cout << v << std::endl;
+
+            if (abs(215 - v) < abs(87 - v))
+            {
+                biome_data.append(QVector2D(0, 0));
+            }
+            else
+            {
+                biome_data.append(QVector2D(1, 0));
+            }
+        }
+    }
+
+    m_biomebuffer.bind();
+    m_biomebuffer.allocate(biome_data.constData(), biome_data.size() * sizeof(QVector2D));
+    m_biomebuffer.release();
+
+    biome_active = true;
 }
 
 int GLWidget::getResolution()
 {
     return object.getResolution();
+}
+
+void GLWidget::DrawCircle()
+{
+    tool_active = true;
+}
+
+void GLWidget::Hand_Tool()
+{
+    tool_active = false;
+}
+
+glm::vec3 GLWidget::GetWorldPosition()
+{
+
+    QPoint mousePos = QCursor::pos();
+
+    QPoint globalPos = mapToGlobal(mousePos); 
+    QSize viewportSize = size();
+    
+    float x = 2.0 * static_cast<float>(globalPos.x()) / viewportSize.width() - 1.0;
+    float y = -2.0 * static_cast<float>(globalPos.y()) / viewportSize.height() + 1.0;
+    float z = 0.0; 
+
+    return glm::vec3(x, z, -y);
 }
