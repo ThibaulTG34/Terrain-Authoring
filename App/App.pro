@@ -9,11 +9,7 @@ HEADERS       = glwidget.h \
                 mesh.h \
                 window.h \
                 mainwindow.h \
-                logo.h \
-                diffusionterrain.h \
-                gpu-shader.h \
-                basics.h \
-                vec.h
+                Camera.h
 
 SOURCES       = glwidget.cpp \
                 cartes.cpp \
@@ -21,9 +17,7 @@ SOURCES       = glwidget.cpp \
                 mesh.cpp \
                 window.cpp \
                 mainwindow.cpp \
-                logo.cpp \
-                diffusionterrain.cpp \
-                gpu-shader.cpp
+                Camera.cpp
 
 RESOURCES += \
     shaders.qrc

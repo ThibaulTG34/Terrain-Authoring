@@ -119,18 +119,26 @@ Window::Window(MainWindow *mw)
 
     tool1 = new QPushButton();
     tool1->setFixedSize(QSize(40, 40));
-    tool1->setStyleSheet("background-color:grey");
+    tool1->setStyleSheet("background-color:rgb(180,180,180)");
     QIcon icon("./hand.png");
     tool1->setIcon(icon);
     tool1->setIconSize(QSize(30, 30));
     connect(tool1, &QPushButton::clicked, glWidget, &GLWidget::Hand_Tool);
+    connect(tool1, &QPushButton::clicked, [=](){
+        tool2->setStyleSheet("background-color:grey");
+        tool1->setStyleSheet("background-color:rgb(180,180,180)");
+    });
     
 
     tool2 = new QPushButton();
     tool2->setFixedSize(QSize(40, 40));
     tool2->setStyleSheet("background-color:grey");
     connect(tool2, &QPushButton::clicked, glWidget, &GLWidget::DrawCircle);
-  
+    connect(tool2, &QPushButton::clicked, [=](){
+        tool1->setStyleSheet("background-color:grey");
+        tool2->setStyleSheet("background-color:rgb(180,180,180)");
+    });
+    
     tool3 = new QPushButton();
     tool3->setFixedSize(QSize(40, 40));
     tool3->setStyleSheet("background-color:grey");
@@ -159,16 +167,7 @@ Window::Window(MainWindow *mw)
 
 void Window::keyPressEvent(QKeyEvent *e)
 {
-    if (e->key() == Qt::Key_Escape)
-        close();
-    else
-        QWidget::keyPressEvent(e);
-
-    if (e->key() == Qt::Key_W)
-    {
-        glWidget->wireframe = !glWidget->wireframe;
-    }
-
+   
     if (e->key() == Qt::Key_Plus)
     {
         glWidget->UpdateResolution(glWidget->getResolution() + 1);
@@ -195,7 +194,14 @@ void Window::keyPressEvent(QKeyEvent *e)
         glWidget->angle_speed -= 0.02;
     }
 
+    glWidget->keyPressEvent(e);
 
+
+}
+
+void Window::keyReleaseEvent(QKeyEvent *event)
+{
+     glWidget->keyReleaseEvent(event);
 }
 
 void Window::initTexture(QPixmap p)
@@ -235,4 +241,26 @@ void Window::BiomeModif(QString imgname)
 void Window::ChangeFPS(int fps)
 {
     FPS->setText(QString("FPS:%1").arg(fps));
+}
+
+// void Window::AmplitudeMIN(float v)
+// {
+
+// }
+
+// void Window::AmplitudeMAX(float v)
+// {
+
+// }
+
+void Window::UpdateAmplitudeMax(int v)
+{
+    // emit AmplitudeMAX(v);
+    glWidget->setAmplitudeMAX(float(v)/10.f);
+}
+
+void Window::UpdateAmplitudeMin(int v)
+{
+    // emit AmplitudeMIN(v);
+    glWidget->setAmplitudeMIN(float(v)/10.f);
 }

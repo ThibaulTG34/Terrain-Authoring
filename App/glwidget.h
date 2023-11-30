@@ -67,6 +67,7 @@
 #include <QTime>
 #include <QTimer>
 #include <QCursor>
+#include <Camera.h>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
@@ -77,6 +78,7 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 public:
     GLWidget(QWidget *parent = 0);
     ~GLWidget();
+    Camera cam;
 
     static bool isTransparent() { return m_transparent; }
     static void setTransparent(bool t) { m_transparent = t; }
@@ -84,18 +86,28 @@ public:
     QSize minimumSizeHint() const override;
     QSize sizeHint() const override;
     Mesh object;
-    void loadOFF(std::string file);
     void UpdateResolution(int res);
     void UpdateTerrain(QString imgname);
     void UpdateBiome(QString imgname);
 
     int getResolution();
+    void keyPressEvent(QKeyEvent *e);
+    void keyReleaseEvent(QKeyEvent *e);
+
+    float getAmplitudeMAX();
+    float getAmplitudeMIN();
+
+    void setAmplitudeMAX(float ampl);
+    void setAmplitudeMIN(float ampl);
 
     bool wireframe;
-    bool tool_active;
+    bool control_press;
+    bool shift_press;
     bool mode_pres;
 
     float angle_speed;
+
+    float theta = 0;
 
     QTimer timer;
     QTime last_time;
@@ -128,26 +140,21 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override
     {
         // Lorsque le clic de souris est relâché, restaurer le curseur par défaut
-        if (!tool_active)
-        {
-            QPixmap customCursorPixmap("./drag.png");
-            QCursor customCursor(customCursorPixmap);
-            setCursor(customCursor);
-        }
+
+        QPixmap customCursorPixmap("./drag.png");
+        QCursor customCursor(customCursorPixmap);
+        setCursor(customCursor);
 
         // Appel de la fonction de la classe de base pour traiter l'événement
         QWidget::mouseReleaseEvent(event);
     }
-    void WheelEvent(QWheelEvent *event);
+    void wheelEvent(QWheelEvent *event);
     void enterEvent(QEvent *event) override
     {
-        if (!tool_active)
-        {
-            QPixmap customCursorPixmap("./drag.png");
-            QCursor customCursor(customCursorPixmap);
-            setCursor(customCursor);
-        }
 
+        QPixmap customCursorPixmap("./drag.png");
+        QCursor customCursor(customCursorPixmap);
+        setCursor(customCursor);
     }
 
     void leaveEvent(QEvent *event) override
@@ -172,18 +179,34 @@ private:
     QMatrix4x4 m_model;
     static bool m_transparent;
 
+    float objectRotationX=0;
+    float objectRotationY=0;
+
     int mouseX, mouseY;
+    float radius_sphere_selection = 0.3f;
+    glm::vec3 worldPosition;
+    QImage heightMAP;
+    QVector<int> heightMapDATA;
 
     bool hm_active = false;
     QOpenGLTexture *hmap;
+    float amplitude_max;
+    float amplitude_min;
 
     bool biome_active = false;
+    QOpenGLTexture *biome;
+
+    QOpenGLTexture *desertB;
+    QOpenGLTexture *desertM;
+    QOpenGLTexture *desertT;
+
     bool mouseMovePressed = false;
     bool mouseRotatePressed = false;
     bool mouseZoomPressed = false;
     int lastX = 0;
     int lastY = 0;
     int lastZoom = 0;
+    Camera *camera;
 
     QVector3D cam_position;
     QVector3D cam_front;
@@ -196,7 +219,7 @@ private:
     QOpenGLBuffer indexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
     QOpenGLBuffer m_texturebuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 
-    QOpenGLBuffer m_biomebuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    // QOpenGLBuffer m_biomebuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 };
 
 #endif

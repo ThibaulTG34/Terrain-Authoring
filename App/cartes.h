@@ -34,14 +34,21 @@ public:
     QVector<char> hauteurs;
     QVector<char> biomes;
     Window *w;
+    QSlider *amplitudeMAX;
+    QSlider *amplitudeMIN;
 
 signals:
-
+    void UpdateSliderMax(float v);
+    void UpdateSliderMin(float v);
 
 
 public slots:
     void initMap();
     void initMapBiome();
+
+private:
+    QSlider *createSlider();
+
 };
 
 #endif // CARTE_H

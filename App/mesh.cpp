@@ -1,5 +1,3 @@
-
-
 #include "mesh.h"
 #include <qopengl.h>
 #include <QOpenGLWidget>
@@ -11,6 +9,8 @@ Mesh::Mesh()
 {
     resolution = 16;
     CreateFlatTerrain(1, 16);
+    
+   
 }
 
 Mesh::Mesh(int res)
@@ -23,11 +23,13 @@ Mesh::~Mesh()
 {
 }
 
-int Mesh::getResolution(){
+int Mesh::getResolution()
+{
     return resolution;
 }
 
-void Mesh::setResolution(int r){
+void Mesh::setResolution(int r)
+{
     resolution = r;
 }
 
@@ -81,104 +83,6 @@ void Mesh::createCube()
         4, 1, 0};
 }
 
-bool Mesh::loadOFF(const std::string &filename)
-{
-    this->vertices.clear();
-    this->indices.clear();
-    bool convertToTriangles = true;
-    bool randomize = false;
-
-    std::ifstream myfile;
-    myfile.open(filename.c_str());
-    if (!myfile.is_open())
-    {
-        std::cout << filename << " cannot be opened" << std::endl;
-        return false;
-    }
-
-    std::string magic_s;
-
-    myfile >> magic_s;
-
-    if (magic_s != "OFF")
-    {
-        std::cout << magic_s << " != OFF :   We handle ONLY *.off files." << std::endl;
-        myfile.close();
-        return false;
-    }
-
-    int n_vertices, n_indices, dummy_int;
-    myfile >> n_vertices >> n_indices >> dummy_int;
-
-    vertices.resize(n_vertices);
-
-    for (int v = 0; v < n_vertices; ++v)
-    {
-        QVector3D vertex;
-        myfile >> vertex[0] >> vertex[1] >> vertex[2];
-
-        vertices[v] = vertex;
-    }
-
-    for (int f = 0; f < n_indices; ++f)
-    {
-        int n_vertices_on_face;
-        myfile >> n_vertices_on_face;
-        if (n_vertices_on_face == 3)
-        {
-            unsigned short _v1, _v2, _v3;
-            std::vector<unsigned short> _v;
-            myfile >> _v1 >> _v2 >> _v3;
-            //            _v.push_back( _v1 );
-            //            _v.push_back( _v2 );
-            //            _v.push_back( _v3 );
-            //            indices.push_back( _v );
-            indices.push_back(_v1);
-            indices.push_back(_v2);
-            indices.push_back(_v3);
-        }
-        else if (n_vertices_on_face > 3)
-        {
-            std::vector<unsigned short> vhandles;
-            vhandles.resize(n_vertices_on_face);
-            for (int i = 0; i < n_vertices_on_face; ++i)
-                myfile >> vhandles[i];
-
-            if (convertToTriangles)
-            {
-                unsigned short k = (randomize) ? (rand() % vhandles.size()) : 0;
-                for (unsigned short i = 0; i < vhandles.size() - 2; ++i)
-                {
-                    std::vector<unsigned short> tri(3);
-                    tri[0] = vhandles[(k + 0) % vhandles.size()];
-                    tri[1] = vhandles[(k + i + 1) % vhandles.size()];
-                    tri[2] = vhandles[(k + i + 2) % vhandles.size()];
-                    // indices.push_back(tri);
-                    indices.push_back(tri[0]);
-                    indices.push_back(tri[1]);
-                    indices.push_back(tri[2]);
-                }
-            }
-            else
-            {
-                // indices.push_back(vhandles);
-                for (int i = 0; i < vhandles.size(); ++i)
-                    indices.push_back(vhandles[i]);
-            }
-        }
-        else
-        {
-            std::cout << "OFFIO::open error : Face number " << f << " has " << n_vertices_on_face << " vertices" << std::endl;
-            myfile.close();
-            return false;
-        }
-    }
-
-    myfile.close();
-
-    return true;
-}
-
 void Mesh::CreateFlatTerrain(int taille, int resolution)
 {
     vertices.clear();
@@ -189,9 +93,9 @@ void Mesh::CreateFlatTerrain(int taille, int resolution)
     {
         for (int j = 0; j < resolution; j++)
         {
-            float x = (float)(taille * i) / (float)(resolution - 1) - taille/2.0;
+            float x = (float)(taille * i) / (float)(resolution - 1) - taille / 2.0;
             float y = 0;
-            float z = (float)(taille * j) / (float)(resolution - 1) - taille/2.0;
+            float z = (float)(taille * j) / (float)(resolution - 1) - taille / 2.0;
 
             this->vertices.append(QVector3D(x, y, z));
 
@@ -267,4 +171,231 @@ void Mesh::AddRandomNoise(float amplitude)
     }
 }
 
+bool Mesh::contain(QVector<unsigned int> const &i_vector, unsigned int element)
+{
+    for (unsigned int i = 0; i < i_vector.size(); i++)
+    {
+        if (i_vector[i] == element)
+            return true;
+    }
+    return false;
+}
 
+void Mesh::collect_one_ring(QVector<QVector<unsigned int>> &o_one_ring)
+{
+    o_one_ring.clear();
+    o_one_ring.resize(vertices.size()); // one-ring of each vertex, i.e. a list of vertices with which it shares an edge
+    // Parcourir les triangles et ajouter les voisins dans le 1-voisinage
+    // Attention verifier que l'indice n'est pas deja present
+    for (unsigned int i = 0; i < indices.size(); i += 3)
+    {
+        // Tous les points opposés dans le indices sont reliés
+        for (int j = 0; j < 3; j++)
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                if (j != k)
+                {
+                    if (!contain(o_one_ring[indices[i + j]], indices[i + k]))
+                    {
+                        o_one_ring[indices[i + j]].append(indices[i + k]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+QVector<QVector3D> Mesh::LaplaceBeltrami_operator(bool smooth)
+{
+    QVector<QVector<unsigned int>> o_one_ring;
+
+    QVector<QVector3D> LBv;
+    LBv.resize(vertices.size());
+
+    collect_one_ring(o_one_ring);
+
+    for (int i = 0; i < o_one_ring.size(); i++)
+    {
+        unsigned int v_index = i;
+
+        QVector3D sum(0, 0, 0);
+        float w_sum = 0.f;
+
+        for (int j = 0; j < o_one_ring[i].size(); j++)
+        {
+
+            unsigned int v_neighbor = o_one_ring[i][j];
+            QVector<std::pair<QVector<short>, unsigned int>> trianglesNeighbors;
+            trianglesNeighbors = GetNeighborsTriangles(v_index, v_neighbor);
+
+            if (trianglesNeighbors.size() == 2)
+
+            {
+                QVector3D edge1_triangle_1 = vertices[v_index] - vertices[trianglesNeighbors[0].second];
+                QVector3D edge2_triangle_1 = vertices[v_neighbor] - vertices[trianglesNeighbors[0].second];
+
+                std::cout << "i = " << trianglesNeighbors[0].second << std::endl;
+
+                QVector3D edge1_triangle_2 = vertices[v_index] - vertices[trianglesNeighbors[1].second];
+
+                QVector3D edge2_triangle_2 = vertices[v_index] - vertices[trianglesNeighbors[1].second];
+
+                QVector3D common_edge = vertices[v_index] - vertices[v_neighbor];
+
+                float alpha = QVector3D::dotProduct(edge1_triangle_1, edge2_triangle_1);
+                float beta = QVector3D::dotProduct(edge1_triangle_2, edge2_triangle_2);
+
+                float cot_alpha = sin(alpha) / cos(alpha);
+                float cot_beta = sin(beta) / cos(beta);
+
+                float w = 0.5f * (alpha + beta);
+
+                sum += w * (vertices[o_one_ring[i][j]] - vertices[i]);
+
+                if (smooth)
+                    w_sum += w;
+            }
+        }
+
+        LBv[i] = smooth ? sum / w_sum : sum;
+    }
+
+    return LBv;
+}
+
+QVector<std::pair<QVector<short>, unsigned int>> Mesh::GetNeighborsTriangles(unsigned int id1, unsigned int id2)
+{
+    QVector<std::pair<QVector<short>, unsigned int>> map_;
+
+    for (int i = 0; i < indices.size(); i += 3)
+    {
+        std::cout << " id : " << id1 << " - " << id2 << std::endl;
+        std::cout << " indices : " << indices[i] << " - " << indices[i + 1] << " - " << indices[i + 2] << std::endl;
+
+        std::pair<QVector<short>, unsigned int> pair;
+        if ((indices[i] == id1 && indices[i + 1] == id2 || indices[i] == id2 && indices[i + 1] == id1))
+        {
+            std::cout << " ici : " << indices[i + 2] << std::endl;
+            map_.append(std::pair{indices, indices[i + 2]});
+        }
+        else if ((indices[i] == id1 && indices[i + 2] == id2 || indices[i] == id2 && indices[i + 2] == id1))
+        {
+            std::cout << " la : " << indices[i + 2] << std::endl;
+            map_.append(std::pair{indices, indices[i + 1]});
+        }
+        else if ((indices[i + 1] == id1 && indices[i + 2] == id2 || indices[i + 1] == id2 && indices[i + 2] == id1))
+        {
+            std::cout << " bas : " << indices[i + 2] << std::endl;
+            map_.append(std::pair{indices, indices[i]});
+        }
+    }
+
+    return map_;
+}
+
+void Mesh::Smooth_LaplaceBeltrami(int _iters)
+{
+    QVector<QVector3D> vertices_smooth;
+    QVector<QVector3D> LBv;
+    for (int i = 0; i < _iters; i++)
+    {
+        vertices_smooth.clear();
+        LBv.clear();
+
+        LBv = LaplaceBeltrami_operator(true);
+
+        for (int j = 0; j < LBv.size(); j++)
+        {
+            vertices_smooth.append(vertices[j] + (0.5f * LBv[j]));
+        }
+        vertices = vertices_smooth;
+    }
+}
+
+
+void Mesh::taubinSmooth(int _iters, float lambda, float mu)
+{
+    QVector<QVector<unsigned int>> o_one_ring;
+    collect_one_ring(o_one_ring);
+    QVector<QVector3D> Luv;
+    QVector<QVector3D> vertices_smooth;
+
+    QVector<QVector3D> Luv_lambda;
+    QVector<QVector3D> vertices_lambda;
+    for (int k = 0; k < _iters; k++)
+    {
+        vertices_smooth.clear();
+        Luv.clear();
+        Luv_lambda.clear();
+        vertices_lambda.clear();
+
+        for (int i = 0; i < vertices.size(); i++)
+        {
+            QVector3D mean_neighbors(0, 0, 0);
+            for (int j = 0; j < o_one_ring[i].size(); j++)
+            {
+                mean_neighbors += vertices[o_one_ring[i][j]];
+            }
+
+            mean_neighbors /= o_one_ring[i].size();
+            mean_neighbors -= vertices[i];
+            Luv.append(mean_neighbors);
+        }
+
+        for (int i = 0; i < Luv.size(); i++)
+        {
+            vertices_lambda.append(vertices[i] + (lambda * Luv[i]));
+        }
+
+        for (int i = 0; i < vertices_lambda.size(); i++)
+        {
+            QVector3D mean_neighbors(0, 0, 0);
+            for (int j = 0; j < o_one_ring[i].size(); j++)
+            {
+                mean_neighbors += vertices_lambda[o_one_ring[i][j]];
+            }
+
+            mean_neighbors /= o_one_ring[i].size();
+            mean_neighbors -= vertices_lambda[i];
+            Luv_lambda.append(mean_neighbors);
+        }
+
+        for (int i = 0; i < Luv_lambda.size(); i++)
+        {
+            vertices_smooth.append(vertices_lambda[i] + (mu * Luv_lambda[i]));
+        }
+
+        vertices = vertices_smooth;
+    }
+}
+
+
+QVector3D Mesh::MeanSmooth(float radius, QVector3D center, QVector<int> data)
+{
+    int count = 0;
+    QVector3D mean(0,0,0);
+
+    // std::cout << "/* message */" << std::endl;
+
+    for (size_t i = 0; i < vertices.size(); i++)
+    {
+        vertices[i].setY(data[i]);
+
+        QVector2D c(center.x(), center.z());
+        QVector2D v(vertices[i].x(), vertices[i].z());
+
+        float distance = c.distanceToPoint(v);
+
+        if (distance <= radius)
+        {
+            mean += vertices[i];
+            count ++;
+        }
+    }
+
+    mean /= float(count);
+    // std::cout << "mean : " << mean.x() << " - "<< mean.y() << " - "<< mean.z() << std::endl;
+    return mean;
+    
+}

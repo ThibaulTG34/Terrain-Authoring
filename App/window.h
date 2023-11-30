@@ -76,15 +76,22 @@ public:
     void BiomeModif(QString hauteurs);
     QLabel *FPS;
 
+
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
 
+signals:
+    void AmplitudeMIN(float v);
+    void AmplitudeMAX(float v);
 
 public slots:
     void initTexture(QPixmap p);
     void initRidge(QPixmap p);
     void initRiver(QPixmap p);
     void ChangeFPS(int fps);
+    void UpdateAmplitudeMax(int v);
+    void UpdateAmplitudeMin(int v);
 
 private:
     GLWidget *glWidget;
@@ -93,7 +100,7 @@ private:
     QPushButton *tool2;
     QPushButton *tool3;
     QPushButton *tool4;
-
+    
     Cartes *maps;
 
 

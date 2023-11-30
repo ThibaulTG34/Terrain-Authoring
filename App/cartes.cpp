@@ -16,7 +16,7 @@ Cartes::Cartes(QWidget *parent)
     QVBoxLayout *mapSide = new QVBoxLayout;
     QWidget *mapSideContainer = new QWidget;
     mapSideContainer->setLayout(mapSide);
-    this->setFixedSize(120, 1000);
+    this->setFixedSize(200, 1000);
 
     MapContainerLayout->addWidget(mapSideContainer);
 
@@ -25,7 +25,7 @@ Cartes::Cartes(QWidget *parent)
     QVBoxLayout *gradientSide = new QVBoxLayout;
     QWidget *gradientSideContainer = new QWidget;
     gradientSideContainer->setLayout(gradientSide);
-    this->setFixedSize(120, 1000);
+    // this->setFixedSize(120, 1000);
 
     mapSide->addWidget(gradientSideContainer);
 
@@ -38,13 +38,30 @@ Cartes::Cartes(QWidget *parent)
     import->setIconSize(QSize(20, 20));
     connect(import, &QPushButton::clicked, this, &Cartes::initMap);
     gradientSide->addWidget(import);
+    gradientSide->setAlignment(import, Qt::AlignHCenter);
 
     gradient = new QLabel(this);
     gradient->setStyleSheet("background-color: black;");
     gradient->setFixedSize(QSize(122, 80));
     gradientSide->addWidget(gradient);
-    gradientSide->setAlignment(gradient, Qt::AlignTop);
+    gradientSide->setAlignment(gradient, Qt::AlignTop | Qt::AlignHCenter);
     gradientSide->setContentsMargins(0, 0, 0, 0);
+
+    QLabel *amin = new QLabel(this);
+    amin->setText("Amplitude minimale :");
+    gradientSide->addWidget(amin); 
+    amplitudeMIN = createSlider();
+    gradientSide->addWidget(amplitudeMIN);
+    connect(amplitudeMIN, SIGNAL(valueChanged(int)), w, SLOT(UpdateAmplitudeMin(int)));
+
+
+    QLabel *amax = new QLabel(this);
+    amax->setText("Amplitude maximale :");
+    gradientSide->addWidget(amax); 
+    amplitudeMAX = createSlider();
+    gradientSide->addWidget(amplitudeMAX);
+    connect(amplitudeMAX, SIGNAL(valueChanged(int)), w, SLOT(UpdateAmplitudeMax(int)));
+
 //////////////////////////////////////////////////////////
 
 
@@ -52,7 +69,7 @@ Cartes::Cartes(QWidget *parent)
     QVBoxLayout *textureSide = new QVBoxLayout;
     QWidget *textureSideContainer = new QWidget;
     textureSideContainer->setLayout(textureSide);
-    this->setFixedSize(120, 1000);
+    // this->setFixedSize(120, 1000);
 
     mapSide->addWidget(textureSideContainer);
 
@@ -65,12 +82,13 @@ Cartes::Cartes(QWidget *parent)
     import2->setIconSize(QSize(20, 20));
     connect(import2, &QPushButton::clicked, this, &Cartes::initMapBiome);
     textureSide->addWidget(import2);
+    textureSide->setAlignment(import2, Qt::AlignHCenter);
 
     texture = new QLabel(this);
     texture->setStyleSheet("background-color: red;");
     texture->setFixedSize(QSize(122, 80));
     textureSide->addWidget(texture);
-    textureSide->setAlignment(texture, Qt::AlignTop);
+    textureSide->setAlignment(texture, Qt::AlignTop | Qt::AlignHCenter);
     textureSide->setContentsMargins(0, 0, 0, 0);
 ////////////////////////////////////////////////////////////
 
@@ -79,16 +97,27 @@ Cartes::Cartes(QWidget *parent)
     cretes->setStyleSheet("background-color: green;");
     cretes->setFixedSize(QSize(122, 80));
     mapSide->addWidget(cretes);
-    mapSide->setAlignment(cretes, Qt::AlignTop);
+    mapSide->setAlignment(cretes, Qt::AlignTop | Qt::AlignHCenter);
     mapSide->setContentsMargins(0, 0, 0, 0);
 
     rivieres = new QLabel(this);
     rivieres->setStyleSheet("background-color: blue;");
     rivieres->setFixedSize(QSize(122, 80));
     mapSide->addWidget(rivieres);
-    mapSide->setAlignment(rivieres, Qt::AlignTop);
+    mapSide->setAlignment(rivieres, Qt::AlignTop | Qt::AlignHCenter);
     mapSide->setContentsMargins(0, 0, 0, 0);
 
+}
+
+QSlider *Cartes::createSlider()
+{
+    QSlider *slider = new QSlider(Qt::Horizontal);
+    slider->setRange(0, 20);
+    slider->setSingleStep(1);
+    slider->setPageStep(20 * 0.05);
+    slider->setTickInterval(20 * 0.05);
+    slider->setTickPosition(QSlider::TicksRight);
+    return slider;
 }
 
 void Cartes::initMap()
@@ -150,5 +179,15 @@ void Cartes::initMapBiome()
 
     }
 }
+
+// void Cartes::UpdateSliderMin(float v)
+// {
+//     w->UpdateAmplitudeMin(v);
+// }
+
+// void Cartes::UpdateSliderMax(float v)
+// {
+//     w->UpdateAmplitudeMax(v);
+// }
 
 
