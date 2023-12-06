@@ -54,6 +54,7 @@
 #include <QCoreApplication>
 #include <math.h>
 #include <iostream>
+#include <GL/glut.h>
 
 bool GLWidget::m_transparent = false;
 bool firstMouse = true;
@@ -65,6 +66,8 @@ GLWidget::GLWidget(QWidget *parent)
       m_zRot(0),
       m_program(0)
 {
+    setMouseTracking(true);
+
     m_core = QSurfaceFormat::defaultFormat().profile() == QSurfaceFormat::CoreProfile;
     // --transparent causes the clear color to be transparent. Therefore, on systems that
     // support it, the widget will become transparent apart from the logo.
@@ -195,7 +198,6 @@ void GLWidget::initializeGL()
     if (!m_program->bind())
         close();
 
-    // m_mvp_matrix_loc = m_program->uniformLocation("mvp_matrix");
     m_normal_matrix_loc = m_program->uniformLocation("normal_matrix");
     m_light_pos_loc = m_program->uniformLocation("light_position");
 
@@ -217,6 +219,11 @@ void GLWidget::initializeGL()
     m_texturebuffer.allocate(object.uvs.constData(), sizeof(QVector2D) * object.uvs.size());
     m_texturebuffer.release();
 
+    normalsBuffer.create();
+    normalsBuffer.bind();
+    normalsBuffer.allocate(object.normals.constData(), sizeof(QVector3D) * object.normals.size());
+    normalsBuffer.release();
+
     resizeGL(16, 9);
 
     vao_.bind();
@@ -224,6 +231,10 @@ void GLWidget::initializeGL()
     indexBuffer_.bind();
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+
+    normalsBuffer.bind();
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
 
     m_texturebuffer.bind();
     glEnableVertexAttribArray(2);
@@ -238,7 +249,7 @@ void GLWidget::initializeGL()
     // m_view.translate(0.2, 0.15, -3);
 
     // Light position is fixed.
-    m_program->setUniformValue(m_light_pos_loc, QVector3D(1.2f, 1.0f, 2.0f));
+    // m_program->setUniformValue(m_light_pos_loc, QVector3D(1.2f, 1.0f, 2.0f));
 
     QImage desertBottom = QImage("desertBottom.jpg");
     desertB = new QOpenGLTexture(desertBottom);
@@ -247,6 +258,24 @@ void GLWidget::initializeGL()
     desertM = new QOpenGLTexture(desertMiddle);
 
     desertT = new QOpenGLTexture(desertMiddle);
+
+    QImage CanyonBottom = QImage("canyonBottom.jpg");
+    canyonB = new QOpenGLTexture(CanyonBottom);
+
+    QImage CanyonMiddle = QImage("canyonMiddle.jpg");
+    canyonM = new QOpenGLTexture(CanyonMiddle);
+
+    QImage CanyonTop = QImage("canyonMiddle.jpg");
+    canyonT = new QOpenGLTexture(CanyonTop);
+
+    QImage montagneBottom = QImage("montagneBottom.jpg");
+    montagneB = new QOpenGLTexture(montagneBottom);
+
+    QImage montagneMiddle = QImage("montagneMiddle.jpg");
+    montagneM = new QOpenGLTexture(montagneMiddle);
+
+    QImage montagneTop = QImage("montagneTop.jpg");
+    montagneT = new QOpenGLTexture(montagneTop);
 
     m_program->release();
 }
@@ -265,6 +294,7 @@ void GLWidget::paintGL()
     }
     // // -------------------------------
 
+    glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -297,15 +327,12 @@ void GLWidget::paintGL()
 
     QMatrix3x3 normal_matrix = m_model.normalMatrix();
 
-    // Set normal matrix
-    m_program->setUniformValue(m_normal_matrix_loc, normal_matrix);
+    if (wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    // if (wireframe)
-    //     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    // else
-    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    // m_program->bind();
+    m_program->bind();
 
     if (hm_active)
     {
@@ -333,21 +360,62 @@ void GLWidget::paintGL()
     desertT->bind();
     m_program->setUniformValue("desertT", 4);
 
+    glActiveTexture(GL_TEXTURE5);
+    canyonB->bind();
+    m_program->setUniformValue("canyonB", 5);
+
+    glActiveTexture(GL_TEXTURE6);
+    canyonM->bind();
+    m_program->setUniformValue("canyonM", 6);
+
+    glActiveTexture(GL_TEXTURE7);
+    canyonT->bind();
+    m_program->setUniformValue("canyonT", 7);
+
+    glActiveTexture(GL_TEXTURE8);
+    montagneB->bind();
+    m_program->setUniformValue("montagneB", 8);
+
+    glActiveTexture(GL_TEXTURE9);
+    montagneM->bind();
+    m_program->setUniformValue("montagneM", 9);
+
+    glActiveTexture(GL_TEXTURE10);
+    montagneT->bind();
+    m_program->setUniformValue("montagneT", 10);
+
+    m_program->setUniformValue(m_program->uniformLocation("tool_active"), tool_active);
+
     // if (mode_pres)
     // {
     //     m_view.rotate(angle_speed, 0, 1, 0);
     //     // m_projection.perspective(glm::radians(45.0f), (4.0f / 3.0f), 0.01f, 100.0f);
     //     // m_view.lookAt(QVector3D(0, 0, -3), QVector3D(0, 0, 0), QVector3D(0, 1, 0));
     // }
+    if (tool_active && !mouseLeftPressed && !mouseMiddlePressed && !mouseRightPressed)
+    {
 
-    // worldPosition = GetWorldPosition();
-    // if (tool_active)
-    // {
+        worldPosition = GetWorldPosition();
 
-    // m_program->setUniformValue(m_program->uniformLocation("radius"), radius_sphere_selection);
-    // m_program->setUniformValue(m_program->uniformLocation("center"), QVector3D(worldPosition.x, 0, worldPosition.z));
-    // m_program->setUniformValue(m_program->uniformLocation("tool_active"), tool_active);
-    // m_program->setUniformValue(m_light_pos_loc, QVector3D(0, 1, 0));
+        // for (size_t i = 0; i < object.indices.size(); i+=3)
+        // {
+        //     float NdotDir = QVector3D::dotProduct(object.normals[i], worldPosition);
+        //     float d       = -QVector3D::dotProduct(object.normals[i], object.vertices[i]);
+        //     float t       = -(QVector3D::dotProduct(object.normals[i], camera->getPosition()) + d) / NdotDir;
+
+        //     if(t > 0)
+        //     {
+        //         QVector3D inter = camera->getPosition() + t * worldPosition;
+        //     }
+        // }
+
+        m_program->setUniformValue(m_program->uniformLocation("center"), worldPosition);
+
+        m_program->setUniformValue(m_program->uniformLocation("radius"), radius_sphere_selection);
+    }
+
+    m_program->setUniformValue(m_light_pos_loc, QVector3D(1.2, 1, 2));
+    m_program->setUniformValue(m_program->uniformLocation("textureSize"), heightSize);
 
     m_program->bind();
     m_program->setUniformValue(m_program->uniformLocation("model"), m_model);
@@ -356,11 +424,9 @@ void GLWidget::paintGL()
 
     m_program->setUniformValue(m_program->uniformLocation("amplitudeMAX"), amplitude_max);
     m_program->setUniformValue(m_program->uniformLocation("amplitudeMIN"), amplitude_min);
-    // // m_program->setUniformValue(m_program->uniformLocation("objectColor"), QVector3D(1.0f, 0.5f, 0.31f));
-    // // m_program->setUniformValue("ambiant_color", QVector4D(0.4, 0.4, 0.4, 1.0));
-    // m_program->setUniformValue(m_program->uniformLocation("lightColor"), QVector3D(1.0f, 1.0f, 1.0f));
-    // m_program->setUniformValue(m_program->uniformLocation("viewPos"), QVector3D(0.0f, 0.0f, 0.0f));
-    // // }
+
+    m_program->setUniformValue(m_program->uniformLocation("lightColor"), QVector3D(1.0f, 1.0f, 1.0f));
+    m_program->setUniformValue(m_program->uniformLocation("viewPos"), camera->getPosition());
 
     // if (tool_active)
     // {
@@ -373,12 +439,26 @@ void GLWidget::paintGL()
     //     // vertexBuffer_.release();
     // }
 
+    if (!mouseRightPressed && !mouseLeftPressed && !mouseMiddlePressed)
+        setMouseTracking(true);
+    else
+        setMouseTracking(false);
+
     update();
 
     vao_.bind();
 
     glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_SHORT, (void *)0);
-
+    glEnableVertexAttribArray(1);
+    normalsBuffer.bind();
+    glVertexAttribPointer(
+        1,        // attribute
+        3,        // size
+        GL_FLOAT, // type
+        GL_FALSE, // normalized?
+        0,        // stride
+        (void *)0 // array buffer offset
+    );
     vao_.release();
 
     m_program->release();
@@ -407,42 +487,46 @@ void GLWidget::resizeGL(int w, int h)
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
     m_last_position = event->pos();
+    mouseX = event->pos().x();
+    mouseY = event->pos().y();
 
     if (event->button() == Qt::LeftButton)
     {
+        mouseRightPressed = false;
+        mouseLeftPressed = true;
+        mouseMiddlePressed = false;
 
-        QPixmap customCursorPixmap("./dragClick.png");
-        QCursor customCursor(customCursorPixmap);
-        setCursor(customCursor);
-
-        mouseMovePressed = false;
-        mouseRotatePressed = true;
-        mouseZoomPressed = false;
+        if (tool_active)
+        {
+            // object.SmoothMoyenneur(radius_sphere_selection, worldPosition, heightMapDATA, amplitude_max, amplitude_min);
+            // std::cout << "smooth done !" << std::endl;
+            // vertexBuffer_.bind();
+            // vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
+            // vertexBuffer_.release();
+        }
     }
     else if (event->button() == Qt::RightButton)
     {
-        // if (!tool_active)
-        // {
-        QPixmap customCursorPixmap("./dragClick.png");
-        QCursor customCursor(customCursorPixmap);
-        setCursor(customCursor);
-        // }
-        // lastX = event->x();
-        // lastY = event->y();
-        mouseMovePressed = true;
-        mouseRotatePressed = false;
-        mouseZoomPressed = false;
+        mouseRightPressed = true;
+        mouseLeftPressed = false;
+        mouseMiddlePressed = false;
     }
     else if (event->button() == Qt::MiddleButton)
     {
+        if (!tool_active)
+        {
+            QPixmap customCursorPixmap("./dragClick.png");
+            QCursor customCursor(customCursorPixmap);
+            setCursor(customCursor);
+        }
         lastX = event->x();
         lastY = event->y();
-        if (!mouseZoomPressed)
+        if (!mouseMiddlePressed)
         {
-
-            mouseMovePressed = false;
-            mouseRotatePressed = false;
-            mouseZoomPressed = true;
+            setMouseTracking(false);
+            mouseRightPressed = false;
+            mouseLeftPressed = false;
+            mouseMiddlePressed = true;
         }
     }
 }
@@ -470,13 +554,13 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     mouseX = event->x();
     mouseY = event->y();
 
-    if (mouseRotatePressed)
+    if (mouseLeftPressed)
     {
     }
-    else if (mouseMovePressed)
+    else if (mouseRightPressed)
     {
     }
-    else if (mouseZoomPressed && shift_press)
+    else if (mouseMiddlePressed && shift_press)
     {
         int deltaX = mouseX - lastX;
         int deltaY = mouseY - lastY;
@@ -486,7 +570,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
         lastX = mouseX;
         lastY = mouseY;
     }
-    else if (mouseZoomPressed)
+    else if (mouseMiddlePressed && !hasMouseTracking())
     {
         if (firstMouse)
         {
@@ -537,15 +621,41 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
+void GLWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    QPixmap customCursorPixmap("./drag.png");
+    QCursor customCursor(customCursorPixmap);
+    setCursor(customCursor);
+
+    QWidget::mouseReleaseEvent(event);
+    if (event->button() == Qt::LeftButton)
+    {
+        mouseLeftPressed = false;
+    }
+    else if (event->button() == Qt::RightButton)
+    {
+        mouseRightPressed = false;
+    }
+    else if (event->button() == Qt::MiddleButton)
+    {
+        mouseMiddlePressed = false;
+    }
+}
 void GLWidget::wheelEvent(QWheelEvent *event)
 {
     int delta = event->angleDelta().y();
 
     // int delta = event->angleDelta().y();
-    // radius_sphere_selection += float(delta) / 2000.f;
+    if (shift_press)
+    {
+        radius_sphere_selection += float(delta) / 2000.f;
+    }
+    else
+    {
+        camera->setPosition(camera->getPosition() + (float(delta) / 75.f) * camera->getMvtSpeed() * camera->getFront());
+    }
 
     // int deltaZoom = mouseY - lastZoom;
-    camera->setPosition(camera->getPosition() + (float(delta) / 75.f) * camera->getMvtSpeed() * camera->getFront());
     // lastZoom = mouseY;
     update();
 }
@@ -587,15 +697,14 @@ void GLWidget::UpdateTerrain(QString imgname)
         {
             int v = (int)qGray(img.pixel(i, j));
 
-            heightMapDATA.append(v/255.f);
+            heightMapDATA.append(v / 255.0f);
         }
     }
 
-    amplitude_min = 0.1;
-    amplitude_max = 2;
-    std::cout << "am : " << amplitude_max << std::endl;
+    amplitude_min = 0.1f;
+    amplitude_max = 2.0f;
+    // std::cout << "am : " << amplitude_max << std::endl;
     m_program->bind();
-    
 
     hm_active = true;
 }
@@ -612,6 +721,10 @@ void GLWidget::UpdateBiome(QString imgname)
 
     QImage img = QImage(imgname);
     img = img.convertToFormat(QImage::Format_Grayscale8);
+    std::cout << qGray(img.pixel(0, 0)) << std::endl;
+
+    heightSize = img.width();
+
     biome = new QOpenGLTexture(img);
 
     biome_active = true;
@@ -689,26 +802,67 @@ void GLWidget::keyReleaseEvent(QKeyEvent *e)
 
 void GLWidget::DrawCircle()
 {
-    // tool_active = true;
+    tool_active = true;
 }
 
 void GLWidget::Hand_Tool()
 {
-    // tool_active = false;
+    tool_active = false;
 }
+glm::mat4 GLWidget::convertQMatrixToGLM(const QMatrix4x4 &qMatrix)
+{
+    glm::mat4 glmMatrix;
 
-glm::vec3 GLWidget::GetWorldPosition()
+    // Les indices de ligne et de colonne des éléments peuvent nécessiter des ajustements
+    for (int row = 0; row < 4; ++row)
+    {
+        for (int col = 0; col < 4; ++col)
+        {
+            // Assigner chaque élément individuel de QMatrix à glmMatrix
+            glmMatrix[col][row] = qMatrix(row, col); // L'ordre peut nécessiter des ajustements
+        }
+    }
+
+    return glmMatrix;
+}
+QVector3D GLWidget::GetWorldPosition()
 {
     QPoint mousePos = QCursor::pos();
 
-    QPoint globalPos = mapToGlobal(mousePos);
-    QSize viewportSize = size();
+    QPoint globalPos = this->mapToGlobal(mousePos);
+    // QSize viewportSize = size();
 
-    float x = 2.0 * static_cast<float>(globalPos.x()) / viewportSize.width() - 1.0;
-    float y = -2.0 * static_cast<float>(globalPos.y()) / viewportSize.height() + 1.0;
-    float z = 0.0;
+    float x = ((2.0f * static_cast<float>(mouseX)) / width()) - 1.0f;
+    float y = 1.0f - ((2.0f * static_cast<float>(mouseY)) / height());
+    float z = 1.0f;
 
-    return glm::vec3(x, z, -y);
+    QMatrix4x4 viewportMatrix;
+    float w2 = width() / 2.0f;
+    float h2 = height() / 2.0f;
+
+    viewportMatrix.setToIdentity();
+    viewportMatrix.setColumn(0, QVector4D(w2, 0.0f, 0.0f, 0.0f));
+    viewportMatrix.setColumn(1, QVector4D(0.0f, h2, 0.0f, 0.0f));
+    viewportMatrix.setColumn(2, QVector4D(0.0f, 0.0f, 1.0f, 0.0f));
+    viewportMatrix.setColumn(3, QVector4D(w2, h2, 0.0f, 1.0f));
+
+    QMatrix4x4 viewMatrix = m_view;
+    QMatrix4x4 modelViewMatrix = viewMatrix * m_model;
+    QMatrix4x4 modelViewProject = m_projection * modelViewMatrix;
+    QMatrix4x4 inverted = viewportMatrix * modelViewProject;
+
+    float posZ;
+    float posY = height() - globalPos.y() - 1.0f;
+
+    inverted = inverted.inverted();
+
+    glReadPixels(static_cast<int>(globalPos.x()), static_cast<int>(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
+
+    QVector4D clickedPointOnScreen(static_cast<float>(globalPos.x()), posY, 2.0f * posZ - 1.0f, 1.0f);
+    QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
+
+    return clickedPointIn3DOrgn.toVector3DAffine();
+
 }
 
 float GLWidget::getAmplitudeMAX()

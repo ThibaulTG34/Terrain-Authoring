@@ -85,7 +85,7 @@ public:
 
     QSize minimumSizeHint() const override;
     QSize sizeHint() const override;
-    Mesh object;
+    Mesh object=Mesh(0);
     void UpdateResolution(int res);
     void UpdateTerrain(QString imgname);
     void UpdateBiome(QString imgname);
@@ -123,6 +123,7 @@ public slots:
     void DrawCircle();
     void Hand_Tool();
 
+
 signals:
 
     // Completer : ajouter des signaux pour signaler des changement de rotation
@@ -137,17 +138,7 @@ protected:
     void resizeGL(int width, int height) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override
-    {
-        // Lorsque le clic de souris est relâché, restaurer le curseur par défaut
-
-        QPixmap customCursorPixmap("./drag.png");
-        QCursor customCursor(customCursorPixmap);
-        setCursor(customCursor);
-
-        // Appel de la fonction de la classe de base pour traiter l'événement
-        QWidget::mouseReleaseEvent(event);
-    }
+    void mouseReleaseEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event);
     void enterEvent(QEvent *event) override
     {
@@ -163,8 +154,9 @@ protected:
     }
 
 private:
+    glm::mat4 convertQMatrixToGLM(const QMatrix4x4 &qMatrix);
     void setupVertexAttribs();
-    glm::vec3 GetWorldPosition();
+    QVector3D GetWorldPosition();
     bool m_core;
     int m_xRot;
     int m_yRot;
@@ -179,14 +171,15 @@ private:
     QMatrix4x4 m_model;
     static bool m_transparent;
 
-    float objectRotationX=0;
-    float objectRotationY=0;
+    float objectRotationX = 0;
+    float objectRotationY = 0;
 
     int mouseX, mouseY;
     float radius_sphere_selection = 0.3f;
-    glm::vec3 worldPosition;
+    QVector3D worldPosition;
     QImage heightMAP;
-    QVector<int> heightMapDATA;
+    QVector<float> heightMapDATA;
+    float heightSize;
 
     bool hm_active = false;
     QOpenGLTexture *hmap;
@@ -200,13 +193,25 @@ private:
     QOpenGLTexture *desertM;
     QOpenGLTexture *desertT;
 
-    bool mouseMovePressed = false;
-    bool mouseRotatePressed = false;
-    bool mouseZoomPressed = false;
+    QOpenGLTexture *canyonB;
+    QOpenGLTexture *canyonM;
+    QOpenGLTexture *canyonT;
+
+    QOpenGLTexture *montagneB;
+    QOpenGLTexture *montagneM;
+    QOpenGLTexture *montagneT;
+
+
+
+    bool mouseRightPressed = false;
+    bool mouseLeftPressed = false;
+    bool mouseMiddlePressed = false;
     int lastX = 0;
     int lastY = 0;
     int lastZoom = 0;
     Camera *camera;
+
+    bool tool_active;
 
     QVector3D cam_position;
     QVector3D cam_front;
@@ -217,6 +222,7 @@ private:
     QOpenGLVertexArrayObject vao_;
     QOpenGLBuffer vertexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     QOpenGLBuffer indexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+    QOpenGLBuffer normalsBuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     QOpenGLBuffer m_texturebuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 
     // QOpenGLBuffer m_biomebuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);

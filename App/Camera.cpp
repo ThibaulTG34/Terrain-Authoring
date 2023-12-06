@@ -17,7 +17,7 @@ Camera::Camera()
     QVector3D direction = position - target;
     direction.normalize();
     QVector3D cross = QVector3D::crossProduct(up, direction);
-    cross.normalize();
+    // cross.normalize();
     upOrbit = QVector3D::crossProduct(direction, cross);
 }
 

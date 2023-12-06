@@ -29,10 +29,12 @@ public:
     QSize taille_image;
     QLabel *gradient;
     QLabel *texture;
-    QLabel *cretes;
+    QLabel *vegetation;
     QLabel *rivieres;
     QVector<char> hauteurs;
     QVector<char> biomes;
+    QVector<char> vege;
+    QVector<char> water;
     Window *w;
     QSlider *amplitudeMAX;
     QSlider *amplitudeMIN;
@@ -45,6 +47,8 @@ signals:
 public slots:
     void initMap();
     void initMapBiome();
+    void initMapVege();
+    void initMapWater();
 
 private:
     QSlider *createSlider();

@@ -24,41 +24,30 @@ uniform sampler2D heightmap;
 uniform float amplitudeMAX;
 uniform float amplitudeMIN;
 
+out float ampl;
+
 
 void main() {
     uvs = texture_coordonnees;
-    float height = texture(heightmap, texture_coordonnees).r;
+    vec4 new_position;
     if(tool_active)
     {
-        vec2 v_pos = vertex.xz;
-        vec2 center_pos = center.xz;
-
-        // if(distance(center_pos, v_pos) <= radius && distance(center_pos, v_pos) > radius - 0.05)
-        // {
-        //     height *= 1;
-        // }
-        // if(radius - 0.05 <= distance(center_pos, v_pos) && distance(center_pos, v_pos) < radius - 0.005)
-        // {
-        //     height *= (mean.y * 0.01);
-        // }
-        // if(radius - 0.005 <= distance(center_pos, v_pos) && distance(center_pos, v_pos) <= radius)
-        // {
-        //     height *= (mean.y * 0.1);
-        // }
-        // float coeff = radius - distance(center_pos, v_pos);
-        // if(coeff >= 0)
-        //     height *= (mean.y * coeff * 0.1);
+        new_position = vertex;
+        height_ = vertex.y;
     }
+    else{
 
-    // height /= 255.0;
-    height = (height * (amplitudeMAX - amplitudeMIN)) + amplitudeMIN;
+        float height = texture(heightmap, texture_coordonnees).r;
+        ampl = amplitudeMAX;
 
-    height_=height;
+        height = (height * (amplitudeMAX - amplitudeMIN)) + amplitudeMIN;
 
-    vec4 new_position = vec4(vertex.x, height, vertex.z, 1.0);
+        height_ = height;
+        new_position = vec4(vertex.x, height, vertex.z, 1.0);
     
-    v_position =  vertex.xyz;
-    v_normal =  normal;
-
+    }
+    
+    v_position = new_position.xyz;
+    v_normal = mat3(transpose(inverse(model))) * normal;
     gl_Position = projection * view * model * new_position;
 }

@@ -5,18 +5,22 @@
 #include <iostream>
 #include <random>
 
-Mesh::Mesh()
+Mesh::Mesh(int mode )
 {
-    resolution = 16;
-    CreateFlatTerrain(1, 16);
-    
-   
+    if (mode == 0)
+    {
+        resolution = 16;
+        CreateFlatTerrain(1, 16);
+    }
 }
 
-Mesh::Mesh(int res)
+Mesh::Mesh(int mode, int res)
 {
-    resolution = res;
-    CreateFlatTerrain(1, 16);
+    if (mode == 0)
+    {
+        resolution = res;
+        CreateFlatTerrain(1, 16);
+    }
 }
 
 Mesh::~Mesh()
@@ -31,6 +35,35 @@ int Mesh::getResolution()
 void Mesh::setResolution(int r)
 {
     resolution = r;
+}
+
+void Mesh::SmoothMoyenneur(float r, QVector3D c, QVector<float> height, float amplMAX, float amplMIN)
+{
+    QVector<QVector<unsigned int>> o_one_ring;
+    collect_one_ring(o_one_ring);
+    for (size_t i = 0; i < vertices.size(); i++)
+    {
+
+        vertices[i].setY(static_cast<float>((height[i] * (amplMAX - amplMIN)) + amplMIN));
+        std::cout << (c - vertices[i]).length() << std::endl;
+
+        if ((c.distanceToPoint(vertices[i]) <= r))
+        {
+            float sumWeights = 0.0f;
+            float weightedHeightSum = 0.0f;
+            for (int v = 0; v < o_one_ring[i].size(); ++v)
+            {
+                float distance=(c - vertices[i]).length();
+                float weight = exp(-(distance * distance) / (2 * r * r));
+                weightedHeightSum += (weight*height[i]);
+                sumWeights += weight;
+            }
+
+            float newHeight = weightedHeightSum / sumWeights;
+            std::cout << newHeight << std::endl;
+            vertices[i].setY(newHeight);
+        }   
+    }
 }
 
 void Mesh::createCube()
@@ -122,6 +155,8 @@ void Mesh::CreateFlatTerrain(int taille, int resolution)
         }
     }
 
+    computeNormals();
+
     // Initialise();
 }
 
@@ -184,12 +219,9 @@ bool Mesh::contain(QVector<unsigned int> const &i_vector, unsigned int element)
 void Mesh::collect_one_ring(QVector<QVector<unsigned int>> &o_one_ring)
 {
     o_one_ring.clear();
-    o_one_ring.resize(vertices.size()); // one-ring of each vertex, i.e. a list of vertices with which it shares an edge
-    // Parcourir les triangles et ajouter les voisins dans le 1-voisinage
-    // Attention verifier que l'indice n'est pas deja present
+    o_one_ring.resize(vertices.size());
     for (unsigned int i = 0; i < indices.size(); i += 3)
     {
-        // Tous les points opposés dans le indices sont reliés
         for (int j = 0; j < 3; j++)
         {
             for (int k = 0; k < 3; k++)
@@ -206,196 +238,28 @@ void Mesh::collect_one_ring(QVector<QVector<unsigned int>> &o_one_ring)
     }
 }
 
-QVector<QVector3D> Mesh::LaplaceBeltrami_operator(bool smooth)
+void Mesh::computeNormals()
 {
-    QVector<QVector<unsigned int>> o_one_ring;
+    normals.clear();
+    normals.resize(vertices.size());
 
-    QVector<QVector3D> LBv;
-    LBv.resize(vertices.size());
-
-    collect_one_ring(o_one_ring);
-
-    for (int i = 0; i < o_one_ring.size(); i++)
+    for (size_t i = 0; i < indices.size(); i += 3)
     {
-        unsigned int v_index = i;
+        QVector3D v0 = vertices[indices[i]];
+        QVector3D v1 = vertices[indices[i + 1]];
+        QVector3D v2 = vertices[indices[i + 2]];
 
-        QVector3D sum(0, 0, 0);
-        float w_sum = 0.f;
+        QVector3D faceNormal = QVector3D::crossProduct(v1 - v0, v2 - v0);
 
-        for (int j = 0; j < o_one_ring[i].size(); j++)
-        {
-
-            unsigned int v_neighbor = o_one_ring[i][j];
-            QVector<std::pair<QVector<short>, unsigned int>> trianglesNeighbors;
-            trianglesNeighbors = GetNeighborsTriangles(v_index, v_neighbor);
-
-            if (trianglesNeighbors.size() == 2)
-
-            {
-                QVector3D edge1_triangle_1 = vertices[v_index] - vertices[trianglesNeighbors[0].second];
-                QVector3D edge2_triangle_1 = vertices[v_neighbor] - vertices[trianglesNeighbors[0].second];
-
-                std::cout << "i = " << trianglesNeighbors[0].second << std::endl;
-
-                QVector3D edge1_triangle_2 = vertices[v_index] - vertices[trianglesNeighbors[1].second];
-
-                QVector3D edge2_triangle_2 = vertices[v_index] - vertices[trianglesNeighbors[1].second];
-
-                QVector3D common_edge = vertices[v_index] - vertices[v_neighbor];
-
-                float alpha = QVector3D::dotProduct(edge1_triangle_1, edge2_triangle_1);
-                float beta = QVector3D::dotProduct(edge1_triangle_2, edge2_triangle_2);
-
-                float cot_alpha = sin(alpha) / cos(alpha);
-                float cot_beta = sin(beta) / cos(beta);
-
-                float w = 0.5f * (alpha + beta);
-
-                sum += w * (vertices[o_one_ring[i][j]] - vertices[i]);
-
-                if (smooth)
-                    w_sum += w;
-            }
-        }
-
-        LBv[i] = smooth ? sum / w_sum : sum;
+        normals[indices[i]] += faceNormal;
+        normals[indices[i + 1]] += faceNormal;
+        normals[indices[i + 2]] += faceNormal;
     }
 
-    return LBv;
-}
-
-QVector<std::pair<QVector<short>, unsigned int>> Mesh::GetNeighborsTriangles(unsigned int id1, unsigned int id2)
-{
-    QVector<std::pair<QVector<short>, unsigned int>> map_;
-
-    for (int i = 0; i < indices.size(); i += 3)
+    for (size_t i = 0; i < normals.size(); ++i)
     {
-        std::cout << " id : " << id1 << " - " << id2 << std::endl;
-        std::cout << " indices : " << indices[i] << " - " << indices[i + 1] << " - " << indices[i + 2] << std::endl;
-
-        std::pair<QVector<short>, unsigned int> pair;
-        if ((indices[i] == id1 && indices[i + 1] == id2 || indices[i] == id2 && indices[i + 1] == id1))
-        {
-            std::cout << " ici : " << indices[i + 2] << std::endl;
-            map_.append(std::pair{indices, indices[i + 2]});
-        }
-        else if ((indices[i] == id1 && indices[i + 2] == id2 || indices[i] == id2 && indices[i + 2] == id1))
-        {
-            std::cout << " la : " << indices[i + 2] << std::endl;
-            map_.append(std::pair{indices, indices[i + 1]});
-        }
-        else if ((indices[i + 1] == id1 && indices[i + 2] == id2 || indices[i + 1] == id2 && indices[i + 2] == id1))
-        {
-            std::cout << " bas : " << indices[i + 2] << std::endl;
-            map_.append(std::pair{indices, indices[i]});
-        }
+        QVector3D n = normals[i];
+        n.normalize();
+        normals[i] = n;
     }
-
-    return map_;
-}
-
-void Mesh::Smooth_LaplaceBeltrami(int _iters)
-{
-    QVector<QVector3D> vertices_smooth;
-    QVector<QVector3D> LBv;
-    for (int i = 0; i < _iters; i++)
-    {
-        vertices_smooth.clear();
-        LBv.clear();
-
-        LBv = LaplaceBeltrami_operator(true);
-
-        for (int j = 0; j < LBv.size(); j++)
-        {
-            vertices_smooth.append(vertices[j] + (0.5f * LBv[j]));
-        }
-        vertices = vertices_smooth;
-    }
-}
-
-
-void Mesh::taubinSmooth(int _iters, float lambda, float mu)
-{
-    QVector<QVector<unsigned int>> o_one_ring;
-    collect_one_ring(o_one_ring);
-    QVector<QVector3D> Luv;
-    QVector<QVector3D> vertices_smooth;
-
-    QVector<QVector3D> Luv_lambda;
-    QVector<QVector3D> vertices_lambda;
-    for (int k = 0; k < _iters; k++)
-    {
-        vertices_smooth.clear();
-        Luv.clear();
-        Luv_lambda.clear();
-        vertices_lambda.clear();
-
-        for (int i = 0; i < vertices.size(); i++)
-        {
-            QVector3D mean_neighbors(0, 0, 0);
-            for (int j = 0; j < o_one_ring[i].size(); j++)
-            {
-                mean_neighbors += vertices[o_one_ring[i][j]];
-            }
-
-            mean_neighbors /= o_one_ring[i].size();
-            mean_neighbors -= vertices[i];
-            Luv.append(mean_neighbors);
-        }
-
-        for (int i = 0; i < Luv.size(); i++)
-        {
-            vertices_lambda.append(vertices[i] + (lambda * Luv[i]));
-        }
-
-        for (int i = 0; i < vertices_lambda.size(); i++)
-        {
-            QVector3D mean_neighbors(0, 0, 0);
-            for (int j = 0; j < o_one_ring[i].size(); j++)
-            {
-                mean_neighbors += vertices_lambda[o_one_ring[i][j]];
-            }
-
-            mean_neighbors /= o_one_ring[i].size();
-            mean_neighbors -= vertices_lambda[i];
-            Luv_lambda.append(mean_neighbors);
-        }
-
-        for (int i = 0; i < Luv_lambda.size(); i++)
-        {
-            vertices_smooth.append(vertices_lambda[i] + (mu * Luv_lambda[i]));
-        }
-
-        vertices = vertices_smooth;
-    }
-}
-
-
-QVector3D Mesh::MeanSmooth(float radius, QVector3D center, QVector<int> data)
-{
-    int count = 0;
-    QVector3D mean(0,0,0);
-
-    // std::cout << "/* message */" << std::endl;
-
-    for (size_t i = 0; i < vertices.size(); i++)
-    {
-        vertices[i].setY(data[i]);
-
-        QVector2D c(center.x(), center.z());
-        QVector2D v(vertices[i].x(), vertices[i].z());
-
-        float distance = c.distanceToPoint(v);
-
-        if (distance <= radius)
-        {
-            mean += vertices[i];
-            count ++;
-        }
-    }
-
-    mean /= float(count);
-    // std::cout << "mean : " << mean.x() << " - "<< mean.y() << " - "<< mean.z() << std::endl;
-    return mean;
-    
 }

@@ -124,28 +124,43 @@ Window::Window(MainWindow *mw)
     tool1->setIcon(icon);
     tool1->setIconSize(QSize(30, 30));
     connect(tool1, &QPushButton::clicked, glWidget, &GLWidget::Hand_Tool);
-    connect(tool1, &QPushButton::clicked, [=](){
+    connect(tool1, &QPushButton::clicked, [=]()
+            {
         tool2->setStyleSheet("background-color:grey");
         tool1->setStyleSheet("background-color:rgb(180,180,180)");
-    });
-    
+        tool3->setStyleSheet("background-color:grey");
+        tool4->setStyleSheet("background-color:grey"); });
 
     tool2 = new QPushButton();
     tool2->setFixedSize(QSize(40, 40));
     tool2->setStyleSheet("background-color:grey");
     connect(tool2, &QPushButton::clicked, glWidget, &GLWidget::DrawCircle);
-    connect(tool2, &QPushButton::clicked, [=](){
+    connect(tool2, &QPushButton::clicked, [=]()
+            {
         tool1->setStyleSheet("background-color:grey");
-        tool2->setStyleSheet("background-color:rgb(180,180,180)");
-    });
-    
+        tool3->setStyleSheet("background-color:grey");
+        tool4->setStyleSheet("background-color:grey");
+        tool2->setStyleSheet("background-color:rgb(180,180,180)"); });
+
     tool3 = new QPushButton();
     tool3->setFixedSize(QSize(40, 40));
     tool3->setStyleSheet("background-color:grey");
+    connect(tool3, &QPushButton::clicked, [=]()
+            {
+        tool1->setStyleSheet("background-color:grey");
+        tool2->setStyleSheet("background-color:grey");
+        tool4->setStyleSheet("background-color:grey");
+        tool3->setStyleSheet("background-color:rgb(180,180,180)"); });
 
     tool4 = new QPushButton();
     tool4->setFixedSize(QSize(40, 40));
     tool4->setStyleSheet("background-color:grey");
+    connect(tool4, &QPushButton::clicked, [=]()
+            {
+        tool1->setStyleSheet("background-color:grey");
+        tool3->setStyleSheet("background-color:grey");
+        tool2->setStyleSheet("background-color:grey");
+        tool4->setStyleSheet("background-color:rgb(180,180,180)"); });
 
     QVBoxLayout *ToolsLayout = new QVBoxLayout;
     BackgroundTools->setLayout(ToolsLayout);
@@ -167,7 +182,7 @@ Window::Window(MainWindow *mw)
 
 void Window::keyPressEvent(QKeyEvent *e)
 {
-   
+
     if (e->key() == Qt::Key_Plus)
     {
         glWidget->UpdateResolution(glWidget->getResolution() + 1);
@@ -178,30 +193,28 @@ void Window::keyPressEvent(QKeyEvent *e)
         glWidget->UpdateResolution(glWidget->getResolution() - 1);
     }
 
-    if(e->key() == Qt::Key_P)
+    if (e->key() == Qt::Key_P)
     {
         glWidget->mode_pres = !glWidget->mode_pres;
         glWidget->angle_speed = 0.15;
     }
 
-    if(e->key() == Qt::Key_G)
+    if (e->key() == Qt::Key_G)
     {
         glWidget->angle_speed += 0.02;
     }
 
-    if(e->key() == Qt::Key_B)
+    if (e->key() == Qt::Key_B)
     {
         glWidget->angle_speed -= 0.02;
     }
 
     glWidget->keyPressEvent(e);
-
-
 }
 
 void Window::keyReleaseEvent(QKeyEvent *event)
 {
-     glWidget->keyReleaseEvent(event);
+    glWidget->keyReleaseEvent(event);
 }
 
 void Window::initTexture(QPixmap p)
@@ -256,11 +269,11 @@ void Window::ChangeFPS(int fps)
 void Window::UpdateAmplitudeMax(int v)
 {
     // emit AmplitudeMAX(v);
-    glWidget->setAmplitudeMAX(float(v)/10.f);
+    glWidget->setAmplitudeMAX(float(v) / 10.f);
 }
 
 void Window::UpdateAmplitudeMin(int v)
 {
     // emit AmplitudeMIN(v);
-    glWidget->setAmplitudeMIN(float(v)/10.f);
+    glWidget->setAmplitudeMIN(float(v) / 10.f);
 }
