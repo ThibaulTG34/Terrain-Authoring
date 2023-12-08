@@ -156,7 +156,7 @@ protected:
 private:
     glm::mat4 convertQMatrixToGLM(const QMatrix4x4 &qMatrix);
     void setupVertexAttribs();
-    QVector3D GetWorldPosition();
+    QVector3D GetWorldPosition(QPoint pt);
     bool m_core;
     int m_xRot;
     int m_yRot;
@@ -179,7 +179,7 @@ private:
     QVector3D worldPosition;
     QImage heightMAP;
     QVector<float> heightMapDATA;
-    float heightSize;
+    QVector2D heightSize;
 
     bool hm_active = false;
     QOpenGLTexture *hmap;

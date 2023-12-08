@@ -72,7 +72,6 @@ Window::Window(MainWindow *mw)
     : mainWindow(mw)
 {
     mainWindow = mw;
-    mainWindow->setFixedSize(1000, 1000);
 
     QWidget *w = new QWidget;
     QHBoxLayout *container = new QHBoxLayout;

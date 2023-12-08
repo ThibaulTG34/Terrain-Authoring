@@ -395,7 +395,7 @@ void GLWidget::paintGL()
     if (tool_active && !mouseLeftPressed && !mouseMiddlePressed && !mouseRightPressed)
     {
 
-        worldPosition = GetWorldPosition();
+        // worldPosition = GetWorldPosition();
 
         // for (size_t i = 0; i < object.indices.size(); i+=3)
         // {
@@ -489,6 +489,9 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
     m_last_position = event->pos();
     mouseX = event->pos().x();
     mouseY = event->pos().y();
+
+    worldPosition = GetWorldPosition(event->pos());
+    std::cout << "/* message */" << std::endl;
 
     if (event->button() == Qt::LeftButton)
     {
@@ -611,13 +614,6 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
         setXRotation(m_xRot + 2.5 * deltaY);
         setYRotation(m_yRot + 2.5 * deltaX);
-
-        // right.normalize();
-        // std::cout << right[0] << ' ' << right[1] << ' ' << right[2] << std::endl;
-        // if (deltaX > 0)
-        //     positionOrbit += camera->getPosition() + right * camera->getMvtSpeed();
-        // else
-        //     positionOrbit -= camera->getPosition() + right * camera->getMvtSpeed();
     }
 }
 
@@ -655,8 +651,6 @@ void GLWidget::wheelEvent(QWheelEvent *event)
         camera->setPosition(camera->getPosition() + (float(delta) / 75.f) * camera->getMvtSpeed() * camera->getFront());
     }
 
-    // int deltaZoom = mouseY - lastZoom;
-    // lastZoom = mouseY;
     update();
 }
 
@@ -689,7 +683,6 @@ void GLWidget::UpdateTerrain(QString imgname)
     heightMapDATA.clear();
 
     QImage img = heightMAP.convertToFormat(QImage::Format_Grayscale8);
-    // std::cout << img.width() << " " << img.height() << std::endl;
 
     for (size_t i = 0; i < img.width(); i++)
     {
@@ -703,7 +696,6 @@ void GLWidget::UpdateTerrain(QString imgname)
 
     amplitude_min = 0.1f;
     amplitude_max = 2.0f;
-    // std::cout << "am : " << amplitude_max << std::endl;
     m_program->bind();
 
     hm_active = true;
@@ -723,7 +715,7 @@ void GLWidget::UpdateBiome(QString imgname)
     img = img.convertToFormat(QImage::Format_Grayscale8);
     std::cout << qGray(img.pixel(0, 0)) << std::endl;
 
-    heightSize = img.width();
+    heightSize = QVector2D(img.width(), img.height());
 
     biome = new QOpenGLTexture(img);
 
@@ -755,10 +747,6 @@ void GLWidget::keyPressEvent(QKeyEvent *e)
     {
         camera->setPosition(camera->getPosition() - camera->getMvtSpeed() * camera->getFront());
     }
-
-    // QVector3D right = QVector3D::crossProduct((camera->getTarget() - camera->getPosition()), camera->getUp());
-    // int deltaX = mouseX - lastX;
-    // right.normalize();
 
     if (e->key() == Qt::Key_Q)
     {
@@ -825,44 +813,59 @@ glm::mat4 GLWidget::convertQMatrixToGLM(const QMatrix4x4 &qMatrix)
 
     return glmMatrix;
 }
-QVector3D GLWidget::GetWorldPosition()
-{
-    QPoint mousePos = QCursor::pos();
 
-    QPoint globalPos = this->mapToGlobal(mousePos);
+QVector3D GLWidget::GetWorldPosition(QPoint pt)
+{
+    QPoint globalPos = this->mapToGlobal(pt);
     // QSize viewportSize = size();
 
-    float x = ((2.0f * static_cast<float>(mouseX)) / width()) - 1.0f;
-    float y = 1.0f - ((2.0f * static_cast<float>(mouseY)) / height());
-    float z = 1.0f;
+    // float x = ((2.0f * static_cast<float>(globalPos.x())) / (width())) - 1.0f;
+    // float y = 1.0f - ((2.0f * static_cast<float>(globalPos.y())) / height());
+    // float z = 1.0f;
 
-    QMatrix4x4 viewportMatrix;
-    float w2 = width() / 2.0f;
-    float h2 = height() / 2.0f;
+    // QMatrix4x4 viewportMatrix;
+    // float w2 = width() / 2.0f;
+    // float h2 = height() / 2.0f;
 
-    viewportMatrix.setToIdentity();
-    viewportMatrix.setColumn(0, QVector4D(w2, 0.0f, 0.0f, 0.0f));
-    viewportMatrix.setColumn(1, QVector4D(0.0f, h2, 0.0f, 0.0f));
-    viewportMatrix.setColumn(2, QVector4D(0.0f, 0.0f, 1.0f, 0.0f));
-    viewportMatrix.setColumn(3, QVector4D(w2, h2, 0.0f, 1.0f));
+    // viewportMatrix.setToIdentity();
+    // viewportMatrix.setColumn(0, QVector4D(w2, 0.0f, 0.0f, 0.0f));
+    // viewportMatrix.setColumn(1, QVector4D(0.0f, h2, 0.0f, 0.0f));
+    // viewportMatrix.setColumn(2, QVector4D(0.0f, 0.0f, 1.0f, 0.0f));
+    // viewportMatrix.setColumn(3, QVector4D(w2, h2, 0.0f, 1.0f));
 
-    QMatrix4x4 viewMatrix = m_view;
-    QMatrix4x4 modelViewMatrix = viewMatrix * m_model;
-    QMatrix4x4 modelViewProject = m_projection * modelViewMatrix;
-    QMatrix4x4 inverted = viewportMatrix * modelViewProject;
+    // QMatrix4x4 viewMatrix = m_view;
+    // QMatrix4x4 modelViewMatrix = viewMatrix * m_model;
+    // QMatrix4x4 modelViewProject = m_projection * modelViewMatrix;
+    // QMatrix4x4 inverted = viewportMatrix * modelViewProject;
 
-    float posZ;
-    float posY = height() - globalPos.y() - 1.0f;
+    // inverted = inverted.inverted();
 
-    inverted = inverted.inverted();
+    // float posZ;
+    // float posY = height() - mousePos.y() - 1.0f;
 
-    glReadPixels(static_cast<int>(globalPos.x()), static_cast<int>(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
+    // glReadPixels(static_cast<int>(mousePos.x()), static_cast<int>(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
 
-    QVector4D clickedPointOnScreen(static_cast<float>(globalPos.x()), posY, 2.0f * posZ - 1.0f, 1.0f);
-    QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
+    // QVector4D clickedPointOnScreen(static_cast<float>(mousePos.x()), posY, 2.0f * posZ - 1.0f, 1.0f);
+    // QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
 
-    return clickedPointIn3DOrgn.toVector3DAffine();
+    // return clickedPointIn3DOrgn.toVector3D();
 
+    // Inversion of the viewport transformation
+    // QMatrix4x4 invertedViewport;
+    // invertedViewport.setToIdentity();
+    // invertedViewport.scale(1.0 / width(), 1.0 / height(), 1.0);
+
+    // QVector4D screenCoordinates = invertedViewport * normalized;
+
+    // QMatrix4x4 invertedProjection = projection.inverted();
+
+    // QMatrix4x4 invertedModelView = modelView.inverted();
+
+    // QVector4D modelCoordinates = invertedModelView * invertedProjection * screenCoordinates;
+
+    // return modelCoordinates.toVector3D();
+
+    return QVector3D(0,0,0);
 }
 
 float GLWidget::getAmplitudeMAX()

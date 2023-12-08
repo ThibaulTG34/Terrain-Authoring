@@ -30,7 +30,7 @@ uniform sampler2D montagneB;
 uniform sampler2D montagneM;
 uniform sampler2D montagneT;
 
-uniform float textureSize;
+uniform vec2 textureSize;
 
 uniform bool tool_active;
 
@@ -40,6 +40,7 @@ vec4 desert_jaune =vec4(0.843, 0.843, 0.843, 1.0);
 vec4 montagne_vert =vec4(0.5, 0.5, 0.5, 1.0);
 #define NB_BIOMES 3
 vec3 Biomes[NB_BIOMES];
+vec4 heightsBiomes[NB_BIOMES];
 
 // float pourcentageDistanceAuSeuil(float valeurReelle, float seuil1, float seuil2) {
 //     float distanceAuSeuil1 = abs(valeurReelle - seuil1);
@@ -82,65 +83,85 @@ void makePercentagesOfBiomesWithValue(vec3 value){
    }
 }
 
+void initTexelWithHauteur(vec2 uv){
+
+   if(height_<0.6){
+         heightsBiomes[0]= texture(desertB, uv);
+      }else if(height_<1.5){
+         heightsBiomes[0]= mix(texture(desertB, uv), texture(desertM, uv), pourcentageProximite(height_,0.6,1));
+      }else{
+          heightsBiomes[0]= texture(desertT, uv);
+      }
+
+      if(height_<0.6){
+         heightsBiomes[1]= texture(canyonB, uv);
+      }else if(height_<1.5){
+         heightsBiomes[1]= mix(texture(canyonB, uv), texture(canyonM, uv), pourcentageProximite(height_,0.6,1.5));
+      }else{
+          heightsBiomes[1]=mix(texture(canyonM, uv), texture(canyonT, uv), pourcentageProximite(height_,1.5,2));
+      }
+
+      if(height_<0.6){
+         heightsBiomes[2]= texture(montagneB, uv);
+      }else if(height_<1.5){
+         heightsBiomes[2]= mix(texture(montagneB, uv), texture(montagneM, uv), pourcentageProximite(height_,0.6,1.5));
+      }else{
+          heightsBiomes[2]=mix(texture(montagneM, uv), texture(montagneT, uv), pourcentageProximite(height_,1.5,2));
+      }
+}
 
 vec4 getFromBiome() {
-  vec4 heightsBiomes[NB_BIOMES];
-      if(height_<0.6){
-         heightsBiomes[0]= texture(desertB, uvs);
-      }else if(height_<1.5){
-         heightsBiomes[0]= mix(texture(desertB, uvs), texture(desertM, uvs), pourcentageProximite(height_,0.6,1));
-      }else{
-          heightsBiomes[0]= texture(desertT, uvs);
-      }
+      
 
-      if(height_<0.6){
-         heightsBiomes[1]= texture(canyonB, uvs);
-      }else if(height_<1.5){
-         heightsBiomes[1]= mix(texture(canyonB, uvs), texture(canyonM, uvs), pourcentageProximite(height_,0.6,1.5));
-      }else{
-          heightsBiomes[1]=mix(texture(canyonM, uvs), texture(canyonT, uvs), pourcentageProximite(height_,1.5,2));
-      }
-
-      if(height_<0.6){
-         heightsBiomes[2]= texture(montagneB, uvs);
-      }else if(height_<1.5){
-         heightsBiomes[2]= mix(texture(montagneB, uvs), texture(montagneM, uvs), pourcentageProximite(height_,0.6,1.5));
-      }else{
-          heightsBiomes[2]=mix(texture(montagneM, uvs), texture(montagneT, uvs), pourcentageProximite(height_,1.5,2));
-      }
-
-      // makePercentagesOfBiomesWithValue(texture(biome,uvs).xyz);
+      makePercentagesOfBiomesWithValue(texture(biome,uvs).xyz);
       vec4 finalColor;
-      float texelSize=1.0/textureSize;
+      vec2 texelSize=1.0/textureSize;
       int nbPixelsPris=0;
+      int nbTexelOfABiome[NB_BIOMES];
+      for(int i=0;i<NB_BIOMES;i++){
+         percentages[i]=0.0;;
+      }
+
       for(int i=-1;i<=1;i++){
          for(int j=-1;j<=1;j++){
-            if((uvs+vec2(i,j)*texelSize).x>=0 && (uvs+vec2(i,j)*texelSize).y>=0 && (uvs+vec2(i,j)*texelSize).x<=1 && (uvs+vec2(i,j)*texelSize).y<=1){
-               vec3 texColor = texture(biome, uvs+vec2(i,j)*texelSize).xyz;
+            vec2 offset = vec2(i, j) * texelSize;
+            vec2 new_uvs=(uvs + offset);
+            if(new_uvs.x>=0 && new_uvs.y>=0 && new_uvs.x<=1 && new_uvs.y<=1){
+               vec3 texColor = texture(biome,new_uvs).xyz;
+               // finalColor+=vec4(texColor,1.0);
+               float diffDesert = abs(texColor.x - desert_jaune.x);
+               float diffCanyon = abs(texColor.x - canyon_rouge.x);
+               float diffMontagne = abs(texColor.x - montagne_vert.x);
+               float mindiff=min(diffCanyon,min(diffDesert,diffMontagne));
+               float threshold = 0.01; 
+               initTexelWithHauteur(new_uvs);
+               if (mindiff==diffDesert) {
+                  // finalColor += heightsBiomes[0];
+                  percentages[0]+=1;
+                  nbPixelsPris++;
 
-               vec3 diffDesert = abs(texColor - desert_jaune.xyz);
-               vec3 diffCanyon = abs(texColor - canyon_rouge.xyz);
-               vec3 diffMontagne = abs(texColor - montagne_vert.xyz);
-
-               float threshold = 0.1; 
-
-               if (all(lessThan(diffDesert, vec3(threshold)))) {
-                  finalColor += heightsBiomes[0];
-               } else if (all(lessThan(diffCanyon, vec3(threshold)))) {
-                  finalColor += heightsBiomes[1];
-               } else if (all(lessThan(diffMontagne, vec3(threshold)))) {
-                  finalColor += heightsBiomes[2];
+               } else if (mindiff==diffCanyon) {
+                  // finalColor += heightsBiomes[1];
+                  percentages[1]+=1;;
+                  nbPixelsPris++;
+               }else if (mindiff==diffMontagne) {
+                  return vec4(1,0,1,1);
                }
-               nbPixelsPris++;
-            }
-              
-         }
-            
+               //  else if (all(lessThan(diffMontagne, vec3(threshold)))) {
+               //    // finalColor += heightsBiomes[2];
+               //    nbTexelOfABiome[2]++;
+               // }
+            }  
+         }  
       }
-         
-         finalColor=vec4(finalColor.xyz/nbPixelsPris,1.0);
+      for(int i=0;i<NB_BIOMES;i++){
+         percentages[i]/=nbPixelsPris;
+      }
+         // finalColor=vec4(finalColor.xyz/nbPixelsPris,1.0);
       // }
-
+      initTexelWithHauteur(uvs);
+      // finalColor=mix(heightsBiomes[0], mix(heightsBiomes[1], heightsBiomes[2], (nbTexelOfABiome[1]/nbPixelsPris)),  (nbTexelOfABiome[0]/nbPixelsPris));
+      finalColor=mix(heightsBiomes[0], mix(heightsBiomes[1], heightsBiomes[2], percentages[1]), percentages[0]);
       // finalColor=mix(heightsBiomes[1],finalColor,percentages[1]);
       // vec4 finalColor = (heightsBiomes[0] * percentages[0]) + (heightsBiomes[1] * percentages[1]) + (heightsBiomes[2] * percentages[2]);
       if(finalColor==vec4(0,0,0,1)){
