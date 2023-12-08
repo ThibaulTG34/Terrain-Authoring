@@ -52,9 +52,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "window.h"
+#include "QDebug"
 
-
-#include <diffusionterrain.h>
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -62,6 +62,16 @@ class MainWindow : public QMainWindow
 public:
     MainWindow();
 
+protected:
+    Window *w;
+    void resizeEvent(QResizeEvent *event) override
+    {
+        QMainWindow::resizeEvent(event);
+
+        // Votre logique lors du redimensionnement de la fenêtre
+        // Par exemple :
+        // qDebug() << "La fenêtre a été redimensionnée : Nouvelle taille = " << event->size();
+    }
 };
 
 #endif

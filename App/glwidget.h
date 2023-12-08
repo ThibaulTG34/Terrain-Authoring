@@ -80,6 +80,7 @@ public:
     ~GLWidget();
     Camera cam;
 
+    void resizeGL(int width, int height) override;
     static bool isTransparent() { return m_transparent; }
     static void setTransparent(bool t) { m_transparent = t; }
 
@@ -135,7 +136,6 @@ signals:
 protected:
     void initializeGL() override;
     void paintGL() override;
-    void resizeGL(int width, int height) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
@@ -156,7 +156,7 @@ protected:
 private:
     glm::mat4 convertQMatrixToGLM(const QMatrix4x4 &qMatrix);
     void setupVertexAttribs();
-    QVector3D GetWorldPosition(QPoint pt);
+    QVector3D GetWorldPosition(QPointF pt);
     bool m_core;
     int m_xRot;
     int m_yRot;
@@ -179,14 +179,13 @@ private:
     QVector3D worldPosition;
     QImage heightMAP;
     QVector<float> heightMapDATA;
-    QVector2D heightSize;
+    QVector2D Image_biome_size;
 
     bool hm_active = false;
     QOpenGLTexture *hmap;
     float amplitude_max;
     float amplitude_min;
 
-    bool biome_active = false;
     QOpenGLTexture *biome;
 
     QOpenGLTexture *desertB;
@@ -201,6 +200,10 @@ private:
     QOpenGLTexture *montagneM;
     QOpenGLTexture *montagneT;
 
+    
+    QOpenGLTexture *glacialB;
+    QOpenGLTexture *glacialM;
+    QOpenGLTexture *glacialT;
 
 
     bool mouseRightPressed = false;

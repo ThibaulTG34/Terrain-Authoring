@@ -49,15 +49,16 @@
 ****************************************************************************/
 
 #include "mainwindow.h"
-#include "window.h"
 #include <QMenuBar>
 #include <QMenu>
 #include <QMessageBox>
  
 MainWindow::MainWindow()
 {
+
  if (!centralWidget())
-        setCentralWidget(new Window(this));
+        w=new Window(this);
+        setCentralWidget(w);
         this->showMaximized();
 
 }

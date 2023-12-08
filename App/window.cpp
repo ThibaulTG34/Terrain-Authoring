@@ -65,6 +65,7 @@
 #include <QFileDialog>
 #include <QCheckBox>
 #include <QGraphicsOpacityEffect>
+#include <QDebug>
 
 using namespace std;
 
@@ -178,6 +179,8 @@ Window::Window(MainWindow *mw)
 
     setWindowTitle(tr("Qt OpenGL"));
 }
+
+
 
 void Window::keyPressEvent(QKeyEvent *e)
 {

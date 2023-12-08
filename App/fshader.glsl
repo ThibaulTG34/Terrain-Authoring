@@ -30,6 +30,10 @@ uniform sampler2D montagneB;
 uniform sampler2D montagneM;
 uniform sampler2D montagneT;
 
+uniform sampler2D glacialB;
+uniform sampler2D glacialM;
+uniform sampler2D glacialT;
+
 uniform vec2 textureSize;
 
 uniform bool tool_active;
@@ -38,50 +42,24 @@ uniform bool tool_active;
 vec4 canyon_rouge =vec4(0.341, 0.341, 0.341, 1.0);
 vec4 desert_jaune =vec4(0.843, 0.843, 0.843, 1.0);
 vec4 montagne_vert =vec4(0.5, 0.5, 0.5, 1.0);
-#define NB_BIOMES 3
-vec3 Biomes[NB_BIOMES];
+vec4 glacial_blanc =vec4(1.0, 1.0, 1.0, 1.0);
+#define NB_BIOMES 4
 vec4 heightsBiomes[NB_BIOMES];
 
-// float pourcentageDistanceAuSeuil(float valeurReelle, float seuil1, float seuil2) {
-//     float distanceAuSeuil1 = abs(valeurReelle - seuil1);
-//     float distanceAuSeuil2 = abs(valeurReelle - seuil2);
 
-//     float distanceAuSeuilLePlusProche = min(distanceAuSeuil1, distanceAuSeuil2);
-    
-//     float plageEntreSeuils = abs(seuil2 - seuil1);
+float percentages[NB_BIOMES];
 
-//     float pourcentage = (distanceAuSeuilLePlusProche / plageEntreSeuils);
-
-//     return pourcentage;
-// }
 float pourcentageProximite(float valeurReelle, float seuil1, float seuil2) {
     float distanceAuSeuil1 = abs(valeurReelle - seuil1);
     float distanceAuSeuil2 = abs(valeurReelle - seuil2);
 
     float transitionWidth = seuil2 - seuil1;
-    
-    // Pourcentage de proximité par rapport au seuil1
     float pourcentage1 = 1.0 - clamp(distanceAuSeuil1 / transitionWidth, 0.0, 1.0);
-    // Inversion du pourcentage par rapport à seuil2
     float pourcentage2Alone = 1.0 - pourcentage1;
 
     return pourcentage2Alone;
 }
 
-float percentages[NB_BIOMES];
-
-void makePercentagesOfBiomesWithValue(vec3 value){
-   float totalDistance = 0.0;
-   float distances[NB_BIOMES]; 
-
-   for (int i = 0; i < NB_BIOMES; i++) {
-       distances[i] = distance(value, Biomes[i]);
-       totalDistance += distances[i];
-   }
-   for (int i = 0; i < NB_BIOMES; i++) {
-       percentages[i] = distances[i] / totalDistance;
-   }
-}
 
 void initTexelWithHauteur(vec2 uv){
 
@@ -108,75 +86,69 @@ void initTexelWithHauteur(vec2 uv){
       }else{
           heightsBiomes[2]=mix(texture(montagneM, uv), texture(montagneT, uv), pourcentageProximite(height_,1.5,2));
       }
+
+      
+      if(height_<0.6){
+         heightsBiomes[3]= texture(glacialB, uv);
+      }else if(height_<1.5){
+         heightsBiomes[3]= mix(texture(glacialB, uv), texture(glacialM, uv), pourcentageProximite(height_,0.6,1.5));
+      }else{
+          heightsBiomes[3]=mix(texture(glacialM, uv), texture(glacialT, uv), pourcentageProximite(height_,1.5,2));
+      }
 }
 
 vec4 getFromBiome() {
       
 
-      makePercentagesOfBiomesWithValue(texture(biome,uvs).xyz);
-      vec4 finalColor;
-      vec2 texelSize=1.0/textureSize;
+      vec2 texelSize=vec2(1.0/322,1.0/317);
       int nbPixelsPris=0;
       int nbTexelOfABiome[NB_BIOMES];
       for(int i=0;i<NB_BIOMES;i++){
          percentages[i]=0.0;;
       }
 
-      for(int i=-1;i<=1;i++){
-         for(int j=-1;j<=1;j++){
+      for(int i=-20;i<=20;i++){
+         for(int j=-20;j<=20;j++){
             vec2 offset = vec2(i, j) * texelSize;
             vec2 new_uvs=(uvs + offset);
             if(new_uvs.x>=0 && new_uvs.y>=0 && new_uvs.x<=1 && new_uvs.y<=1){
                vec3 texColor = texture(biome,new_uvs).xyz;
-               // finalColor+=vec4(texColor,1.0);
                float diffDesert = abs(texColor.x - desert_jaune.x);
                float diffCanyon = abs(texColor.x - canyon_rouge.x);
                float diffMontagne = abs(texColor.x - montagne_vert.x);
-               float mindiff=min(diffCanyon,min(diffDesert,diffMontagne));
-               float threshold = 0.01; 
-               initTexelWithHauteur(new_uvs);
-               if (mindiff==diffDesert) {
-                  // finalColor += heightsBiomes[0];
-                  percentages[0]+=1;
-                  nbPixelsPris++;
+               float diffGlacial = abs(texColor.x - glacial_blanc.x);
+               float mindiff=diffDesert;
+               int id=0;
+               
+               if (diffCanyon<mindiff) {
+                  id=1;
+                  mindiff=diffCanyon;
 
-               } else if (mindiff==diffCanyon) {
-                  // finalColor += heightsBiomes[1];
-                  percentages[1]+=1;;
-                  nbPixelsPris++;
-               }else if (mindiff==diffMontagne) {
-                  return vec4(1,0,1,1);
+               } 
+                if (diffMontagne<mindiff) {
+                  id=2;
+                  mindiff=diffMontagne;
                }
-               //  else if (all(lessThan(diffMontagne, vec3(threshold)))) {
-               //    // finalColor += heightsBiomes[2];
-               //    nbTexelOfABiome[2]++;
-               // }
+
+               if (diffGlacial<mindiff) {
+                  id=3;
+                  mindiff=diffGlacial;
+               }
+               percentages[id]+=1;
+               nbPixelsPris++;
             }  
          }  
       }
       for(int i=0;i<NB_BIOMES;i++){
          percentages[i]/=nbPixelsPris;
       }
-         // finalColor=vec4(finalColor.xyz/nbPixelsPris,1.0);
-      // }
       initTexelWithHauteur(uvs);
-      // finalColor=mix(heightsBiomes[0], mix(heightsBiomes[1], heightsBiomes[2], (nbTexelOfABiome[1]/nbPixelsPris)),  (nbTexelOfABiome[0]/nbPixelsPris));
-      finalColor=mix(heightsBiomes[0], mix(heightsBiomes[1], heightsBiomes[2], percentages[1]), percentages[0]);
-      // finalColor=mix(heightsBiomes[1],finalColor,percentages[1]);
-      // vec4 finalColor = (heightsBiomes[0] * percentages[0]) + (heightsBiomes[1] * percentages[1]) + (heightsBiomes[2] * percentages[2]);
-      if(finalColor==vec4(0,0,0,1)){
-         return vec4(1,1,1,1);
-      }else{
-         return finalColor;
-      }
+      return heightsBiomes[0]*percentages[0]+heightsBiomes[1]*percentages[1]+heightsBiomes[2]*percentages[2]+heightsBiomes[3]*percentages[3];
+   
 }
 
 void main() {
    
-   Biomes[0] = desert_jaune.xyz; 
-   Biomes[1] = canyon_rouge.xyz;
-   Biomes[2] = montagne_vert.xyz;
-
 
    vec3 light_pos = light_position + vec3(0, ampl, 0);
 
@@ -194,7 +166,7 @@ void main() {
    float specularStrenght = 0.5;
    vec3 viewDir = normalize(viewPos - v_position);
    vec3 reflectDir = normalize(lightDir + viewDir);
-   float spec = pow(max(dot(norm, reflectDir), 0.0), 32.0);
+   float spec = pow(max(dot(norm, reflectDir), 0.0), 128.0);
    vec3 specular = spec * lightColor;
 
    vec3 result = (ambient + diffuse + specular) * getFromBiome().xyz;
