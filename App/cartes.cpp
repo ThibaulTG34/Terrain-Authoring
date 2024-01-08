@@ -1,6 +1,7 @@
 #include "cartes.h"
 #include <QVBoxLayout>
 #include <basics.h>
+#include <QMessageBox>
 
 Cartes::Cartes(QWidget *parent)
     : QWidget{parent}
@@ -111,10 +112,47 @@ Cartes::Cartes(QWidget *parent)
     vegetationSide->addWidget(vegetation);
     vegetationSide->setAlignment(vegetation, Qt::AlignTop | Qt::AlignHCenter);
     vegetationSide->setContentsMargins(0, 0, 0, 0);
+
+    QHBoxLayout *encadre_info_layout = new QHBoxLayout;
+    QWidget *encadre_infos = new QWidget;
+    encadre_infos->setLayout(encadre_info_layout);
+    vegetationSide->addWidget(encadre_infos);
+
+    QPushButton *infoVege = new QPushButton("?");
+    infoVege->setFixedSize(QSize(25, 25));
+    encadre_info_layout->setAlignment(infoVege, Qt::AlignHCenter);
+    encadre_info_layout->addWidget(infoVege);
+    connect(infoVege, &QPushButton::clicked, this, [=]()
+            { 
+                QPoint boutonGlobal = infoVege->mapToGlobal(QPoint(0, 0));
+                QMessageBox msgBox;
+                msgBox.setFixedSize(100,100);
+                msgBox.setText("Avertissement végétation");
+                msgBox.setInformativeText("La végétation apparaît seulement si le terrain est plus ou moins plat.\n\nCe paramètre peut être géré avec le slider ci-dessous ou en lissant le terrain");
+                msgBox.move(w->x(),w->y());
+                msgBox.exec(); });
+
+    QLabel *degrepente = new QLabel(this);
+    degrepente->setText("Degré de pente :");
+    encadre_info_layout->addWidget(degrepente);
+
+    QSlider *degrePente = new QSlider(Qt::Horizontal);
+    degrePente->setRange(0, 40);
+    degrePente->setSingleStep(2);
+    degrePente->setPageStep(2);
+    degrePente->setTickInterval(2);
+    degrePente->setTickPosition(QSlider::TicksRight);
+
+    degrePente->setValue(0);
+    vegetationSide->addWidget(degrePente);
+    connect(degrePente, SIGNAL(valueChanged(int)), w, SLOT(UpdateDegrePente(int)));
+    vegetationSide->setAlignment(degrePente, Qt::AlignTop);
+    vegetationSide->setAlignment(degrepente, Qt::AlignTop | Qt::AlignHCenter);
+
     ////////////////////////////////////////////////////////////
 
     ////////////////// Water ////////////////////////
-     QVBoxLayout *waterSide = new QVBoxLayout;
+    QVBoxLayout *waterSide = new QVBoxLayout;
     QWidget *waterSideContainer = new QWidget;
     waterSideContainer->setLayout(waterSide);
 
@@ -138,7 +176,6 @@ Cartes::Cartes(QWidget *parent)
     waterSide->setContentsMargins(0, 0, 0, 0);
 
     ////////////////////////////////////////////////////////////
-
 }
 
 QSlider *Cartes::createSlider()
@@ -154,33 +191,42 @@ QSlider *Cartes::createSlider()
 
 void Cartes::initMapVege()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une carte", "", "Images (*.png *.jpg *.bmp *.ppm *.pgm)");
-
-    if (!fileName.isEmpty())
+    if (biomeIsSet)
     {
-        QPixmap pixmap(fileName);
-        vegetation->setStyleSheet("background-color: transparent;");
-        QPixmap scaledPixmap = pixmap.scaled(vegetation->size(), Qt::KeepAspectRatio);
-        vegetation->setPixmap(scaledPixmap);
-        vegetation->setAlignment(Qt::AlignCenter);
-        QImage img = pixmap.toImage();
-        img = img.convertToFormat(QImage::Format_Grayscale8);
+        QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une carte", "", "Images (*.png *.jpg *.bmp *.ppm *.pgm)");
 
-        QSize size_img = pixmap.size();
-        taille_image = size_img;
-        for (size_t i = 0; i < size_img.width(); i++)
+        if (!fileName.isEmpty())
         {
-            for (size_t j = 0; j < size_img.height(); j++)
+            QPixmap pixmap(fileName);
+            vegetation->setStyleSheet("background-color: transparent;");
+            QPixmap scaledPixmap = pixmap.scaled(vegetation->size(), Qt::KeepAspectRatio);
+            vegetation->setPixmap(scaledPixmap);
+            vegetation->setAlignment(Qt::AlignCenter);
+            QImage img = pixmap.toImage();
+            img = img.convertToFormat(QImage::Format_Grayscale8);
+
+            QSize size_img = pixmap.size();
+            taille_image = size_img;
+            for (size_t i = 0; i < size_img.width(); i++)
             {
-                vege.append((char)qGray(img.pixel(i, j)));
+                for (size_t j = 0; j < size_img.height(); j++)
+                {
+                    vege.append((char)qGray(img.pixel(i, j)));
+                }
             }
         }
+        w->VegeModif(fileName);
+    }
+    else
+    {
+        QMessageBox::information(this, "Avertissement végétation", "Une carte biome est nécéssaire pour modifier la végétation");
     }
 }
 
 void Cartes::initMapWater()
 {
-      QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une carte", "", "Images (*.png *.jpg *.bmp *.ppm *.pgm)");
+
+    QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une carte", "", "Images (*.png *.jpg *.bmp *.ppm *.pgm)");
 
     if (!fileName.isEmpty())
     {
@@ -201,6 +247,7 @@ void Cartes::initMapWater()
                 water.append((char)qGray(img.pixel(i, j)));
             }
         }
+        w->WaterModif(fileName);
     }
 }
 
@@ -236,6 +283,7 @@ void Cartes::initMapBiome()
     QString fileName = QFileDialog::getOpenFileName(this, "Sélectionner une carte", "", "Images (*.png *.jpg *.bmp *.ppm *.pgm)");
     if (!fileName.isEmpty())
     {
+        biomeIsSet = true;
         QPixmap pixmap(fileName);
         texture->setStyleSheet("background-color: transparent;");
         QPixmap scaledPixmap = pixmap.scaled(texture->size(), Qt::KeepAspectRatio);

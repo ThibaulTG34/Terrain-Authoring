@@ -55,6 +55,8 @@
 #include <math.h>
 #include <iostream>
 #include <GL/glut.h>
+#include <QThread>
+#include <random>
 
 bool GLWidget::m_transparent = false;
 bool firstMouse = true;
@@ -86,7 +88,6 @@ GLWidget::GLWidget(QWidget *parent)
     last_time = QTime::currentTime();
 
     camera = new Camera();
-
 }
 
 GLWidget::~GLWidget()
@@ -178,16 +179,33 @@ void GLWidget::initializeGL()
     initializeOpenGLFunctions();
     glClearColor(0.8, 0.8, 0.8, 1);
 
-    QImage blackImage(300, 300, QImage::Format_RGB888);
+    QImage blackImage(300, 300, QImage::Format_Grayscale8);
     blackImage.fill(Qt::black);
+    biome_img = blackImage;
     biome = new QOpenGLTexture(blackImage);
+
+    hmap = new QOpenGLTexture(blackImage);
+    heightMAP_generated = QImage(256, 256, QImage::Format_Grayscale8);
+    heightMAP_generated.fill(0);
+    heightMAP = blackImage;
+    QImage whiteImage(300, 300, QImage::Format_RGB888);
+    whiteImage.fill(Qt::white);
+    water = new QOpenGLTexture(whiteImage);
     m_program = new QOpenGLShaderProgram;
+    vege_shader = new QOpenGLShaderProgram;
+
     // Compile vertex shader
     if (!m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshader.glsl"))
         close();
 
     // Compile fragment shader
     if (!m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader.glsl"))
+        close();
+
+    if (!vege_shader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshader_vege.glsl"))
+        close();
+    // Compile fragment shader
+    if (!vege_shader->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader_vege.glsl"))
         close();
 
     m_program->bindAttributeLocation("vertex", 0);
@@ -197,16 +215,20 @@ void GLWidget::initializeGL()
     // Link shader pipeline
     if (!m_program->link())
         close();
-
-    // Bind shader pipeline for use
     if (!m_program->bind())
+        close();
+
+    if (!vege_shader->link())
+        close();
+    if (!vege_shader->bind())
         close();
 
     m_normal_matrix_loc = m_program->uniformLocation("normal_matrix");
     m_light_pos_loc = m_program->uniformLocation("light_position");
 
     vao_.create();
-    QOpenGLVertexArrayObject::Binder vaoBinder(&vao_);
+    // QOpenGLVertexArrayObject::Binder vaoBinder(&vao_);
+    // QOpenGLVertexArrayObject::Binder vaoBinder(&Vegevao_);
 
     vertexBuffer_.create();
     vertexBuffer_.bind();
@@ -228,6 +250,11 @@ void GLWidget::initializeGL()
     normalsBuffer.allocate(object.normals.constData(), sizeof(QVector3D) * object.normals.size());
     normalsBuffer.release();
 
+    // hauteursBuffer.create();
+    // hauteursBuffer.bind();
+    // hauteursBuffer.allocate(heightMapDATA.constData(), heightMapDATA.size() * sizeof(GL_FLOAT));
+    // hauteursBuffer.release();
+
     resizeGL(16, 9);
 
     vao_.bind();
@@ -244,16 +271,18 @@ void GLWidget::initializeGL()
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
 
+    // hauteursBuffer.bind();
+    // glEnableVertexAttribArray(3);
+    // glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat), nullptr);
+
     vao_.release();
+
+    // Vegevao_.bind();
+    // Vegevao_.release();
 
     m_view.setToIdentity();
     m_model.setToIdentity();
     m_projection.setToIdentity();
-
-    // m_view.translate(0.2, 0.15, -3);
-
-    // Light position is fixed.
-    // m_program->setUniformValue(m_light_pos_loc, QVector3D(1.2f, 1.0f, 2.0f));
 
     QImage desertBottom = QImage("desertBottom.jpg");
     desertB = new QOpenGLTexture(desertBottom);
@@ -289,7 +318,65 @@ void GLWidget::initializeGL()
     QImage glacialTop = QImage("glacialTop.jpg");
     glacialT = new QOpenGLTexture(glacialTop);
 
+    QImage image_water = QImage("waterText.png");
+    waterText = new QOpenGLTexture(image_water);
+
     m_program->release();
+
+    // -----------------VEGETATION--------------------
+    Vegevao_.create();
+    Vegevao_.bind();
+    vege_shader->bind();
+    // VegeVertexBuffer_.create();
+    // VegeVertexBuffer_.bind();
+    // VegeVertexBuffer_.allocate(vege.getVertices().constData(), vege.getVertices().size() * sizeof(Vertex));
+    // VegeVertexBuffer_.release();
+
+    // VegeIndicesBuffer_.create();
+    // VegeIndicesBuffer_.bind();
+    // VegeIndicesBuffer_.allocate(vege.getIndices().constData(), vege.getIndices().size() * sizeof(unsigned int));
+    // VegeIndicesBuffer_.release();
+    // VegeUvsBuffer_.create();
+    // VegeUvsBuffer_.bind();
+    // VegeUvsBuffer_.allocate(vege.getUVs().constData(), sizeof(QVector2D) * vege.getUVs().size());
+    // VegeUvsBuffer_.release();
+    // vege_shader->bind();
+
+    // VegeVertexBuffer_.bind();
+    // VegeIndicesBuffer_.bind();
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+    canyon_model = new AssimpModel();
+    canyon_model->LoadModel("./rock_canyon.obj");
+
+    snow_model = new AssimpModel();
+    snow_model->LoadModel("./sapin.obj");
+
+    desert_model = new AssimpModel();
+    desert_model->LoadModel("./rock_desert.obj");
+
+    mountain_model = new AssimpModel();
+    mountain_model->LoadModel("./tree.obj");
+
+    // vegetation.append(mountain_model);
+
+    vege_shader->release();
+    Vegevao_.release();
+    vege_shader->bindAttributeLocation("texture_coordonnees", 3);
+
+    // m_texturebufferForVege.create();
+    // m_texturebufferForVege.bind();
+    // m_texturebufferForVege.allocate(object.uvs.constData(), sizeof(QVector2D) * object.uvs.size());
+    // glEnableVertexAttribArray(3);
+    // glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
+    // QImage image_vege = QImage("text_vege.jpg");
+    // vegeText = new QOpenGLTexture(image_vege);
+
+    // VegeUvsBuffer_.bind();
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
+
+    // worldPosition = QVector3D(0, 0, 0);
 }
 
 void GLWidget::paintGL()
@@ -314,28 +401,22 @@ void GLWidget::paintGL()
     QOpenGLVertexArrayObject::Binder vaoBinder(&vao_);
     m_program->bind();
     m_view.setToIdentity();
+    m_view.rotate(180.0f, 0.0, 0.0, 1.0);
     m_projection.setToIdentity();
     // m_model.setToIdentity();
 
     m_model.setToIdentity();
-    m_model.rotate(180.0f - (m_xRot / 16.0f), 1, 0, 0);
+    // m_model.rotate(-180.0f , 0, 0, 1);
+    m_model.rotate(180 - (m_xRot / 16.0f), 1, 0, 0);
     m_model.rotate(m_yRot / 16.0f, 0, 1, 0);
-    // m_model.rotate(m_zRot / 16.0f, 0, 0, 1);
-    // std::cout << camera->getUp()[0] <<' '<< camera->getUp()[1] << ' '<<camera->getUp()[2] << std::endl;
-    // if(!shift_press)
-    // {
 
-    // }
-    // else
-    // {
-    m_view.lookAt(camera->getPosition(), camera->getPosition() + camera->getFront(), camera->getUp()); ///:CA CA MARCHE FREE CAM
-    // }
+    // m_model.rotate(m_zRot / 16.0f, 0, 0, 1);
+    m_view.lookAt(camera->getPosition(), camera->getPosition() + camera->getFront(), camera->getUp());
 
     m_projection.perspective(camera->getFov(), width() / height(), 0.1f, 100.0f);
 
     // m_model.rotate(45.0f, 1, 1, 0);
-
-    m_model.rotate(90, 1.0f, 0.0f, 0.0f);
+    // m_model.rotate(90, 1.0f, 0.0f, 0.0f);
 
     QMatrix3x3 normal_matrix = m_model.normalMatrix();
 
@@ -349,108 +430,109 @@ void GLWidget::paintGL()
     if (hm_active)
     {
         glActiveTexture(GL_TEXTURE0);
-        hmap->bind();
-        m_program->setUniformValue("heightmap", 0);
-    }
 
+        if (tool_active)
+        {
+            hmap_tool->bind();
+            m_program->setUniformValue("heightmap_tool", 0);
+        }
+        else if (height_tool)
+        {
+            NEW_hmap_tool->bind();
+            m_program->setUniformValue("NEW_hmap_tool", 0);
+        }
+        else /* if(tree_active) */
+        {
+            hmap->bind();
+            m_program->setUniformValue("heightmap", 0);
+        }
+        m_program->setUniformValue(m_program->uniformLocation("amplitudeMAX"), amplitude_max);
+        m_program->setUniformValue(m_program->uniformLocation("amplitudeMIN"), amplitude_min);
+    }
 
     glActiveTexture(GL_TEXTURE1);
     biome->bind();
     m_program->setUniformValue("biome", 1);
-    
 
     glActiveTexture(GL_TEXTURE2);
-    desertB->bind();
-    m_program->setUniformValue("desertB", 2);
+    water->bind();
+    m_program->setUniformValue("water", 2);
 
     glActiveTexture(GL_TEXTURE3);
-    desertM->bind();
-    m_program->setUniformValue("desertM", 3);
+    desertB->bind();
+    m_program->setUniformValue("desertB", 3);
 
     glActiveTexture(GL_TEXTURE4);
-    desertT->bind();
-    m_program->setUniformValue("desertT", 4);
+    desertM->bind();
+    m_program->setUniformValue("desertM", 4);
 
     glActiveTexture(GL_TEXTURE5);
-    canyonB->bind();
-    m_program->setUniformValue("canyonB", 5);
+    desertT->bind();
+    m_program->setUniformValue("desertT", 5);
 
     glActiveTexture(GL_TEXTURE6);
-    canyonM->bind();
-    m_program->setUniformValue("canyonM", 6);
+    canyonB->bind();
+    m_program->setUniformValue("canyonB", 6);
 
     glActiveTexture(GL_TEXTURE7);
-    canyonT->bind();
-    m_program->setUniformValue("canyonT", 7);
+    canyonM->bind();
+    m_program->setUniformValue("canyonM", 7);
 
     glActiveTexture(GL_TEXTURE8);
-    montagneB->bind();
-    m_program->setUniformValue("montagneB", 8);
+    canyonT->bind();
+    m_program->setUniformValue("canyonT", 8);
 
     glActiveTexture(GL_TEXTURE9);
-    montagneM->bind();
-    m_program->setUniformValue("montagneM", 9);
+    montagneB->bind();
+    m_program->setUniformValue("montagneB", 9);
 
     glActiveTexture(GL_TEXTURE10);
-    montagneT->bind();
-    m_program->setUniformValue("montagneT", 10);
+    montagneM->bind();
+    m_program->setUniformValue("montagneM", 10);
 
     glActiveTexture(GL_TEXTURE11);
-    glacialB->bind();
-    m_program->setUniformValue("glacialB", 11);
+    montagneT->bind();
+    m_program->setUniformValue("montagneT", 11);
 
     glActiveTexture(GL_TEXTURE12);
-    glacialM->bind();
-    m_program->setUniformValue("glacialM", 12);
+    glacialB->bind();
+    m_program->setUniformValue("glacialB", 12);
 
     glActiveTexture(GL_TEXTURE13);
-    glacialT->bind();
-    m_program->setUniformValue("glacialT", 13);
+    glacialM->bind();
+    m_program->setUniformValue("glacialM", 13);
 
+    glActiveTexture(GL_TEXTURE14);
+    glacialT->bind();
+    m_program->setUniformValue("glacialT", 14);
+
+    glActiveTexture(GL_TEXTURE15);
+    waterText->bind();
+    m_program->setUniformValue("waterText", 15);
 
     m_program->setUniformValue(m_program->uniformLocation("tool_active"), tool_active);
+    m_program->setUniformValue(m_program->uniformLocation("height_tool"), height_tool);
+    m_program->setUniformValue(m_program->uniformLocation("tree_active"), tree_active);
 
-    // if (mode_pres)
-    // {
-    //     m_view.rotate(angle_speed, 0, 1, 0);
-    //     // m_projection.perspective(glm::radians(45.0f), (4.0f / 3.0f), 0.01f, 100.0f);
-    //     // m_view.lookAt(QVector3D(0, 0, -3), QVector3D(0, 0, 0), QVector3D(0, 1, 0));
-    // }
-
-    if (tool_active && !mouseLeftPressed && !mouseMiddlePressed && !mouseRightPressed)
+    if (tool_active || height_tool || tree_active)
     {
-
-        // worldPosition = GetWorldPosition();
-
+        // qDebug()<<"chlab"<<worldPosition;
         m_program->setUniformValue(m_program->uniformLocation("center"), worldPosition);
-
         m_program->setUniformValue(m_program->uniformLocation("radius"), radius_sphere_selection);
     }
 
-    m_program->setUniformValue(m_light_pos_loc, m_model * QVector3D(0, -2, 0));
+    m_program->setUniformValue(m_light_pos_loc, m_model * QVector3D(0, -3, 0));
     m_program->setUniformValue(m_program->uniformLocation("textureSize"), Image_biome_size);
 
     m_program->bind();
     m_program->setUniformValue(m_program->uniformLocation("model"), m_model);
+
     m_program->setUniformValue(m_program->uniformLocation("view"), m_view);
     m_program->setUniformValue(m_program->uniformLocation("projection"), m_projection);
 
-    m_program->setUniformValue(m_program->uniformLocation("amplitudeMAX"), amplitude_max);
-    m_program->setUniformValue(m_program->uniformLocation("amplitudeMIN"), amplitude_min);
-
     m_program->setUniformValue(m_program->uniformLocation("lightColor"), QVector3D(1.0f, 1.0f, 1.0f));
-    m_program->setUniformValue(m_program->uniformLocation("viewPos"), m_model * QVector3D(0,-2,0));
-
-    // if (tool_active)
-    // {
-    //     // object.taubinSmooth(1, 0.660f, -0.661f);
-    //     QVector3D mean = object.MeanSmooth(radius_sphere_selection, QVector3D(worldPosition.x, 0, worldPosition.z), heightMapDATA);
-    //     m_program->setUniformValue(m_program->uniformLocation("mean"), mean);
-
-    //     // vertexBuffer_.bind();
-    //     // vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
-    //     // vertexBuffer_.release();
-    // }
+    m_program->setUniformValue(m_program->uniformLocation("viewPos"), m_model * QVector3D(0, -2, 0));
+    // m_program->setUniformValue(m_program->uniformLocation("cam_pos"), camera->getPosition());
 
     if (!mouseRightPressed && !mouseLeftPressed && !mouseMiddlePressed)
         setMouseTracking(true);
@@ -461,7 +543,9 @@ void GLWidget::paintGL()
 
     vao_.bind();
 
+    m_program->bind();
     glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_SHORT, (void *)0);
+
     glEnableVertexAttribArray(1);
     normalsBuffer.bind();
     glVertexAttribPointer(
@@ -472,6 +556,11 @@ void GLWidget::paintGL()
         0,        // stride
         (void *)0 // array buffer offset
     );
+
+    m_texturebuffer.bind();
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
+
     vao_.release();
 
     m_program->release();
@@ -479,21 +568,158 @@ void GLWidget::paintGL()
     if (hm_active)
     {
         hmap->release();
+        if (tool_active)
+        {
+            hmap_tool->release();
+        }
+
+        if (height_tool)
+        {
+            NEW_hmap_tool->release();
+        }
     }
 
     biome->release();
-    
+
+    vege_shader->bind();
+    Vegevao_.bind();
+
+    // glActiveTexture(GL_TEXTURE0);
+    // vegeText->bind();
+    // vege_shader->setUniformValue("text_tree", 0);
+
+    // VegeUvsBuffer_.bind();
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
+
+    // glDrawElements(GL_TRIANGLES, vege.getIndices().size(), GL_UNSIGNED_SHORT, (void *)0);
+    // QMatrix4x4 m;
+    // m.setToIdentity();
+    // m.scale(0.1);
+    // m.rotate(180.0f - (m_xRot / 16.0f), 1, 0, 0);
+    // m.rotate(m_yRot / 16.0f, 0, 1, 0);
+    // vege.setModelMatrix(m);
+    m_program->setUniformValue(m_program->uniformLocation("light_position"), m_model * QVector3D(0, -3, 0));
+    m_program->setUniformValue(m_program->uniformLocation("lightColor"), QVector3D(1.0f, 1.0f, 1.0f));
+    std::mt19937 gen(vegetation.size()); // La graine est ici 42, vous pouvez la modifier
+    std::uniform_int_distribution<> distribution(0, 360);
+
+    for (size_t i = 0; i < vegetation.size(); i++)
+    {
+        bool haveToBeDraw = true;
+        if (hm_active)
+        {
+            QVector2D my_uv = object.uvs[vegetation[i]->getIndiceReference()];
+            int my_height = qGray(heightMAP.pixel(my_uv[0] * (heightMAP.width() - 1), my_uv[1] * (heightMAP.height() - 1)));
+            my_height = (my_height * (amplitude_max - amplitude_min)) + amplitude_min;
+            for (int k = -1; k <= 1; k++)
+            {
+                for (int l = -1; l <= 1; l++)
+                {
+                    if (vegetation[i]->getIndiceReference() + k + l * object.getResolution() > 0 && vegetation[i]->getIndiceReference() + k + l * object.getResolution() < object.uvs.size())
+                    {
+                        QVector2D my_voisin = object.uvs[vegetation[i]->getIndiceReference() + k + l * object.getResolution()] /* + QVector2D((1 / heightMAP.width()), 0) */;
+                        int my_voisin_height = qGray(heightMAP.pixel(my_voisin[0] * (heightMAP.width() - 1), my_voisin[1] * (heightMAP.height() - 1)));
+                        my_voisin_height = (my_voisin_height * (amplitude_max - amplitude_min)) + amplitude_min;
+                        if (abs(my_height - my_voisin_height) > degre_de_pente_tolere)
+                        {
+                            haveToBeDraw = false;
+                        }
+                    }
+                }
+            }
+            if (!haveToBeDraw)
+            {
+                continue;
+            }
+        }
+        if (tree_active_delete)
+        {
+            vege_shader->setUniformValue(vege_shader->uniformLocation("selected"), (i == selectedVege));
+        }
+        else
+        {
+            vege_shader->setUniformValue(vege_shader->uniformLocation("selected"), false);
+        }
+        QMatrix4x4 m = vegetation[i]->getModel_Matrix();
+
+        m.setToIdentity();
+        // qDebug()<<object.normals[vegetation[i]->getIndiceReference()];
+        m.rotate(-180.0f - (m_xRot / 16.0f), 1, 0, 0);
+        m.rotate(m_yRot / 16.0f, 0, 1, 0);
+        QVector3D v = object.vertices[vegetation[i]->getIndiceReference()];
+        m.translate(v);
+
+        m.rotate(distribution(gen), .0f, 1.0f, 0.0f);
+        vegetation[i]->setModel_Matrix(m);
+        vege_shader->setUniformValue(vege_shader->uniformLocation("model"), vegetation[i]->getModel_Matrix());
+        vege_shader->setUniformValue(vege_shader->uniformLocation("view"), m_view);
+        vege_shader->setUniformValue(vege_shader->uniformLocation("projection"), m_projection);
+
+        if (hm_active)
+        {
+            glActiveTexture(GL_TEXTURE1);
+
+            if (tool_active)
+            {
+                hmap_tool->bind();
+                vege_shader->setUniformValue("heightmap_tool", 1);
+            }
+            else
+            {
+                hmap->bind();
+                vege_shader->setUniformValue("heightmap", 1);
+            }
+            vege_shader->setUniformValue(vege_shader->uniformLocation("amplitudeMIN"), amplitude_min);
+            vege_shader->setUniformValue(vege_shader->uniformLocation("amplitudeMAX"), amplitude_max);
+        }
+
+        vege_shader->setUniformValue(vege_shader->uniformLocation("tool_active"), tool_active);
+        vege_shader->setUniformValue(vege_shader->uniformLocation("uvLocalPlan"), object.uvs[vegetation[i]->getIndiceReference()]);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        // m_texturebufferForVege.bind();
+        // glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
+        QVector<AssimpModel::MeshEntry> m_Entries = vegetation[i]->getM_entries();
+        QVector<QOpenGLTexture *> m_Textures = vegetation[i]->getTextures();
+        for (unsigned int i = 0; i < m_Entries.size(); i++)
+        {
+            // glBindBuffer(GL_ARRAY_BUFFER, m_Entries[i].VegeVertexBuffer_);
+            m_Entries[i].VegeVertexBuffer_.bind();
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)12);
+            glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)20);
+
+            // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Entries[i].VegeIndicesBuffer_);
+            m_Entries[i].VegeIndicesBuffer_.bind();
+
+            const unsigned int MaterialIndex = m_Entries[i].MaterialIndex;
+
+            if (MaterialIndex < m_Textures.size() && m_Textures[MaterialIndex])
+            {
+                glActiveTexture(GL_TEXTURE0);
+                m_Textures[MaterialIndex]->bind();
+            }
+            glDrawElements(GL_TRIANGLES, m_Entries[i].getNumIndices(), GL_UNSIGNED_INT, 0);
+        }
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
+    }
+    vege_shader->release();
+    Vegevao_.release();
+
     emit UpdateFPS(last_count);
 }
 
 void GLWidget::resizeGL(int w, int h)
 {
-   glViewport(0, 0, w, h);
+    glViewport(0, 0, width(), height());
 
     float aspectRatio = static_cast<float>(w) / static_cast<float>(h);
     m_projection.setToIdentity();
     m_projection.perspective(camera->getFov(), aspectRatio, 0.1f, 100.0f);
-    
 }
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
@@ -510,13 +736,48 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 
         if (tool_active)
         {
-            worldPosition = GetWorldPosition(event->localPos());
-            // object.SmoothMoyenneur(radius_sphere_selection, worldPosition, heightMapDATA, amplitude_max, amplitude_min);
-            // std::cout << "smooth done !" << std::endl;
-            // vertexBuffer_.bind();
-            // vertexBuffer_.allocate(object.vertices.constData(), object.vertices.size() * sizeof(QVector3D));
-            // vertexBuffer_.release();
+            // heightMAP = QImage("./newHeight.png");
+            object.SmoothMoyenneur(radius_sphere_selection, worldPosition, amplitude_min, amplitude_max, heightMAP_smooth);
+            hmap_tool = new QOpenGLTexture(heightMAP_smooth);
         }
+        if (height_tool)
+        {
+            // NEW_hmap_tool = new QOpenGLTexture(heightMAP);
+            object.GenerateHeight(radius_sphere_selection, worldPosition, heightMAP_generated, shift_press);
+            NEW_hmap_tool = new QOpenGLTexture(heightMAP_generated);
+            // hmap = new QOpenGLTexture(heightMAP);
+            // hmap_tool = new QOpenGLTexture(heightMAP);
+
+            amplitude_min = 0.1f;
+            amplitude_max = 2.0f;
+            hm_active = true;
+        }
+        if (tree_active)
+        {
+            int densite = 10;
+            QVector3D target = worldPosition;
+            float distMin = target.distanceToPoint(object.vertices[0]);
+
+            for (size_t i = 1; i < object.vertices.size(); i++)
+            {
+                float dist = target.distanceToPoint(object.vertices[i]);
+                if (dist < radius_sphere_selection && rand() % densite == 8)
+                {
+                    vegetation_map.setPixel(object.uvs[i].x() * (vegetation_map.width() - 1), object.uvs[i].y() * (vegetation_map.height() - 1), qRgb(0, 255, 0));
+                }
+            }
+            vegetation_map.save("./newVege.png");
+            UpdateVegetation(vegetation_map);
+        }
+
+        // if(height_tool && shift_press)
+        // {
+        //     object.GenerateHeight(radius_sphere_selection, worldPosition, heightMAP_generated, shift_press);
+        //     NEW_hmap_tool = new QOpenGLTexture(heightMAP_generated);
+        //     amplitude_min = 0.1f;
+        //     amplitude_max = 2.0f;
+        //     hm_active = true;
+        // }
     }
     else if (event->button() == Qt::RightButton)
     {
@@ -552,18 +813,23 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     mouseX = event->x();
     mouseY = event->y();
 
-    if (mouseLeftPressed)
+    mousePos = event->localPos();
+
+    if (mouseRightPressed && tool_active)
     {
+        worldPosition = GetWorldPosition(mousePos);
     }
-    else if (mouseRightPressed)
+    else if (mouseRightPressed && height_tool)
     {
+        worldPosition = GetWorldPosition(mousePos);
     }
+
     else if (mouseMiddlePressed && shift_press)
     {
         int deltaX = mouseX - lastX;
         int deltaY = mouseY - lastY;
 
-        camera->setPosition(camera->getPosition() + QVector3D(deltaX * 0.001, deltaY * 0.001, 0));
+        camera->setPosition(camera->getPosition() + QVector3D(-deltaX * 0.001, -deltaY * 0.001, 0));
 
         lastX = mouseX;
         lastY = mouseY;
@@ -607,8 +873,12 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
         // std::cout << direction[0] <<' '<<direction[1]<<' '<<direction[2] <<std::endl;
         // frontdemerde=(-direction);
 
+        // std::cout << "x : " << m_xRot << std::endl;
+
         setXRotation(m_xRot + 2.5 * deltaY);
         setYRotation(m_yRot + 2.5 * deltaX);
+
+        update();
     }
 }
 
@@ -664,9 +934,15 @@ void GLWidget::UpdateResolution(int res)
         indexBuffer_.allocate(object.indices.constData(), object.indices.size() * sizeof(short));
         indexBuffer_.release();
 
+        normalsBuffer.bind();
+        normalsBuffer.allocate(object.normals.constData(), sizeof(QVector3D) * object.normals.size());
+        normalsBuffer.release();
+
         m_texturebuffer.bind();
         m_texturebuffer.allocate(object.uvs.constData(), object.uvs.size() * sizeof(QVector2D));
         m_texturebuffer.release();
+        if (!vegetation_map.isNull())
+            UpdateVegetation(vegetation_map);
     }
 }
 
@@ -674,48 +950,107 @@ void GLWidget::UpdateTerrain(QString imgname)
 {
     heightMAP = QImage(imgname);
     hmap = new QOpenGLTexture(heightMAP);
+    hmap_tool = new QOpenGLTexture(heightMAP);
+    NEW_hmap_tool = new QOpenGLTexture(heightMAP);
+    heightMAP_generated = heightMAP;
+    heightMAP_smooth = heightMAP;
 
     heightMapDATA.clear();
 
-    QImage img = heightMAP.convertToFormat(QImage::Format_Grayscale8);
-
-    for (size_t i = 0; i < img.width(); i++)
-    {
-        for (size_t j = 0; j < img.height(); j++)
-        {
-            int v = (int)qGray(img.pixel(i, j));
-
-            heightMapDATA.append(v / 255.0f);
-        }
-    }
-
     amplitude_min = 0.1f;
     amplitude_max = 2.0f;
-    m_program->bind();
 
+    m_program->bind();
+    // hauteursBuffer.bind();
+    // hauteursBuffer.allocate(heightMapDATA.constData(), heightMapDATA.size() * sizeof(float));
+    // hauteursBuffer.release();
     hm_active = true;
 }
 
 /**
 - jaune (desert) = 215
-- vert (herbe) = 1
+- vert (herbe) = 127
 - rouge (canyon) = 87
-- blanc (neige) = 3
+- blanc (neige) = 255
 */
 void GLWidget::UpdateBiome(QString imgname)
 {
-    biome_data.clear();
+    std::cout << qGray(biome_img.pixel(0, 0)) << std::endl;
+    biome_img = QImage(imgname);
+    std::cout << qGray(biome_img.pixel(0, 0)) << std::endl;
 
+    // biome_img = biome_img.convertToFormat(QImage::Format_Grayscale8);
+
+    Image_biome_size = QVector2D(biome_img.width(), biome_img.height());
+
+    biome = new QOpenGLTexture(biome_img.convertToFormat(QImage::Format_Grayscale8));
+}
+
+void GLWidget::UpdateWater(QString imgname)
+{
     QImage img = QImage(imgname);
     img = img.convertToFormat(QImage::Format_Grayscale8);
+    water = new QOpenGLTexture(img);
+}
 
-    
+void GLWidget::UpdateVegetation(QImage imgname)
+{
+    vegetation_map = imgname;
+    selectedVege = 0;
+    vegetation.clear();
+    QThread *thread = new QThread();
+    QObject::connect(thread, &QThread::started, [this, imgname]()
+                     { initVegeThread(imgname); });
+    thread->start();
+}
 
-    Image_biome_size = QVector2D(img.width(), img.height());
+void GLWidget::initVegeThread(QImage img)
+{
+    int size_vertices = object.vertices.size();
+    for (size_t i = 0; i < size_vertices; i++)
+    {
+        int green = qGreen(img.pixel(object.uvs[i].x() * (img.width() - 1), object.uvs[i].y() * (img.height() - 1)));
+        int blue = qBlue(img.pixel(object.uvs[i].x() * (img.width() - 1), object.uvs[i].y() * (img.height() - 1)));
+        int red = qRed(img.pixel(object.uvs[i].x() * (img.width() - 1), object.uvs[i].y() * (img.height() - 1)));
+        if (green == 255 && red == 0 && blue == 0)
+        {
+            AssimpModel *A = new AssimpModel();
+            int biomeVal = qGray(biome_img.pixel(object.uvs[i].x() * (biome_img.width() - 1), object.uvs[i].y() * (biome_img.height() - 1)));
+            if (biomeVal == 87)
+            {
+                A->setVertices(canyon_model->getVertices());
+                A->setIndices(canyon_model->getIndices());
+                A->setTextures(canyon_model->getTextures());
+                A->setM_entries(canyon_model->getM_entries());
+            }
+            else if (biomeVal == 215)
+            {
+                A->setVertices(desert_model->getVertices());
+                A->setIndices(desert_model->getIndices());
+                A->setTextures(desert_model->getTextures());
+                A->setM_entries(desert_model->getM_entries());
+            }
+            else if (biomeVal == 127)
+            {
+                A->setVertices(mountain_model->getVertices());
+                A->setIndices(mountain_model->getIndices());
+                A->setTextures(mountain_model->getTextures());
+                A->setM_entries(mountain_model->getM_entries());
+            }
+            else if (biomeVal == 255)
+            {
+                A->setVertices(snow_model->getVertices());
+                A->setIndices(snow_model->getIndices());
+                A->setTextures(snow_model->getTextures());
+                A->setM_entries(snow_model->getM_entries());
+            }
 
-    biome = new QOpenGLTexture(img);
-
-   
+            A->setIndiceReference(i);
+            vegetation.append(A);
+            // qDebug() << object.uvs[i];
+        }
+        // qDebug() << i << "/" << object.vertices.size();
+    }
 }
 
 int GLWidget::getResolution()
@@ -774,6 +1109,58 @@ void GLWidget::keyPressEvent(QKeyEvent *e)
     {
         shift_press = true;
     }
+    if (e->key() == Qt::Key_I && (height_tool || tool_active || tree_active))
+    {
+        worldPosition.setZ(worldPosition.z() - 0.05);
+    }
+    else if (e->key() == Qt::Key_K && (height_tool || tool_active || tree_active))
+    {
+        worldPosition.setZ(worldPosition.z() + 0.05);
+    }
+    if (e->key() == Qt::Key_J && (height_tool || tool_active || tree_active))
+    {
+        worldPosition.setX(worldPosition.x() - 0.05);
+    }
+    else if (e->key() == Qt::Key_L && (height_tool || tool_active || tree_active))
+    {
+        worldPosition.setX(worldPosition.x() + 0.05);
+    }
+
+    // qDebug() << worldPosition;
+    if (e->key() == Qt::Key_N)
+    {
+        selectedVege = (selectedVege + 1);
+        if (selectedVege >= vegetation.size())
+        {
+            selectedVege = vegetation.size() - 1;
+        }
+    }
+    else if (e->key() == Qt::Key_B)
+    {
+        selectedVege = (selectedVege - 1);
+        if (selectedVege < 0)
+        {
+            selectedVege = 0;
+        }
+    }
+
+    if (e->key() == Qt::Key_Delete)
+    {
+        if (vegetation.size() > 0)
+        {
+            vegetation_map.setPixel(object.uvs[vegetation[selectedVege]->getIndiceReference()].x() * (vegetation_map.width() - 1), object.uvs[vegetation[selectedVege]->getIndiceReference()].y() * (vegetation_map.height() - 1), qRgb(255, 255, 255));
+
+            vegetation.remove(selectedVege);
+            if (selectedVege >= vegetation.size())
+            {
+                selectedVege = vegetation.size() - 1;
+            }
+            if (selectedVege < 0)
+            {
+                selectedVege = 0;
+            }
+        }
+    }
 }
 
 void GLWidget::keyReleaseEvent(QKeyEvent *e)
@@ -786,103 +1173,214 @@ void GLWidget::keyReleaseEvent(QKeyEvent *e)
 
 void GLWidget::DrawCircle()
 {
+    if (height_tool)
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+
+        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
+        int ret = msgBox.exec();
+        if (ret == QMessageBox::Yes)
+        {
+            if (height_tool)
+            {
+                heightMAP = heightMAP_generated;
+                heightMAP_smooth = heightMAP_generated;
+                hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+                hmap = new QOpenGLTexture(heightMAP);
+            }
+            if (tool_active)
+            {
+                heightMAP = heightMAP_smooth;
+                heightMAP_generated = heightMAP_smooth;
+                hmap = new QOpenGLTexture(heightMAP);
+                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+            }
+        }
+    }
+
     tool_active = true;
+    height_tool = false;
+    tree_active = false;
 }
 
 void GLWidget::Hand_Tool()
 {
-    tool_active = false;
-}
-
-glm::mat4 GLWidget::convertQMatrixToGLM(const QMatrix4x4 &qMatrix)
-{
-    glm::mat4 glmMatrix;
-
-    // Les indices de ligne et de colonne des éléments peuvent nécessiter des ajustements
-    for (int row = 0; row < 4; ++row)
+    if (height_tool || tool_active)
     {
-        for (int col = 0; col < 4; ++col)
+        QMessageBox msgBox;
+        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+
+        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
+        int ret = msgBox.exec();
+
+        // Traitement de la réponse de l'utilisateur
+        if (ret == QMessageBox::Yes)
         {
-            // Assigner chaque élément individuel de QMatrix à glmMatrix
-            glmMatrix[col][row] = qMatrix(row, col); // L'ordre peut nécessiter des ajustements
+            // Action si l'utilisateur clique sur "Oui"
+            // Remplacez cette partie avec votre action souhaitée
+            if (height_tool)
+            {
+                heightMAP = heightMAP_generated;
+                heightMAP_smooth = heightMAP_generated;
+                hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+                hmap = new QOpenGLTexture(heightMAP);
+            }
+            if (tool_active)
+            {
+                heightMAP = heightMAP_smooth;
+                heightMAP_generated = heightMAP_smooth;
+                hmap = new QOpenGLTexture(heightMAP);
+                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+            }
         }
     }
 
-    return glmMatrix;
+    tool_active = false;
+    height_tool = false;
+    tree_active = false;
+    tree_active_delete = false;
+}
+
+void GLWidget::HeightTool()
+{
+    if (tool_active)
+    {
+
+        QMessageBox msgBox;
+        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+
+        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
+        int ret = msgBox.exec();
+
+        if (ret == QMessageBox::Yes)
+        {
+            // Action si l'utilisateur clique sur "Oui"
+            // Remplacez cette partie avec votre action souhaitée
+            if (tool_active)
+            {
+                heightMAP = heightMAP_smooth;
+                heightMAP_generated = heightMAP_smooth;
+                hmap = new QOpenGLTexture(heightMAP);
+                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+            }
+        }
+    }
+
+    height_tool = true;
+    tool_active = false;
+    tree_active = false;
+    tree_active_delete = false;
+}
+
+void GLWidget::Tree_Tool()
+{
+    if (height_tool || tool_active)
+    {
+
+        QMessageBox msgBox;
+        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+
+        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
+        int ret = msgBox.exec();
+
+        if (ret == QMessageBox::Yes)
+        {
+            if (height_tool)
+            {
+                heightMAP = heightMAP_generated;
+                heightMAP_smooth = heightMAP_generated;
+                hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+                hmap = new QOpenGLTexture(heightMAP);
+            }
+            if (tool_active)
+            {
+                heightMAP = heightMAP_smooth;
+                heightMAP_generated = heightMAP_smooth;
+                hmap = new QOpenGLTexture(heightMAP);
+                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+            }
+        }
+    }
+
+    height_tool = false;
+    tool_active = false;
+    tree_active_delete = false;
+    tree_active = true;
+}
+
+void GLWidget::Tree_Tool_Delete()
+{
+    if (height_tool || tool_active)
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+
+        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
+        int ret = msgBox.exec();
+
+        if (ret == QMessageBox::Yes)
+        {
+            // Action si l'utilisateur clique sur "Oui"
+            // Remplacez cette partie avec votre action souhaitée
+            if (height_tool)
+            {
+                heightMAP = heightMAP_generated;
+                heightMAP_smooth = heightMAP_generated;
+                hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+                hmap = new QOpenGLTexture(heightMAP);
+            }
+            if (tool_active)
+            {
+                heightMAP = heightMAP_smooth;
+                heightMAP_generated = heightMAP_smooth;
+                hmap = new QOpenGLTexture(heightMAP);
+                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+            }
+        }
+    }
+
+    height_tool = false;
+    tool_active = false;
+    tree_active_delete = true;
+    tree_active = false;
 }
 
 QVector3D GLWidget::GetWorldPosition(QPointF pt)
 {
-    // std::cout << "Pas Global : " << pt.x() << " - " << pt.y() << std::endl;
-    // QPoint globalPos = this->mapToGlobal(pt);
-    // std::cout << "Global : " << globalPos.x() << " - " << globalPos.y() << std::endl;
-    // QSize viewportSize = size();
+    float x_n = (pt.x() - 0.0f) / width();
+    float y_n = (pt.y() - 0.0f) / height();
+    float x = (2.0f * x_n) - 1.0f;
+    float y = 1.0f - (2.0f * y_n);
 
-    // float x = ((2.0f * static_cast<float>(globalPos.x())) / (width())) - 1.0f;
-    // float y = 1.0f - ((2.0f * static_cast<float>(globalPos.y())) / height());
-    // float z = 1.0f;
+    QMatrix4x4 invertedViewProjection = (m_projection * m_view).inverted();
 
-    QMatrix4x4 viewportMatrix;
-    float w2 = width() / 2.0f;
-    float h2 = height() / 2.0f;
+    QVector4D rayClip(x, 0, y, 1.0f);
+    // QMatrix4x4 inverted = m_view.inverted() * m_projection.inverted();
+    // QVector4D rayEye = m_projection.inverted() * rayClip;
+    // rayEye.setZ(-1.0f);
+    // rayEye.setW(0.0f);
 
-    viewportMatrix.setToIdentity();
-    viewportMatrix.setColumn(0, QVector4D(w2, 0.0f, 0.0f, 0.0f));
-    viewportMatrix.setColumn(1, QVector4D(0.0f, h2, 0.0f, 0.0f));
-    viewportMatrix.setColumn(2, QVector4D(0.0f, 0.0f, 1.0f, 0.0f));
-    viewportMatrix.setColumn(3, QVector4D(w2, h2, 0.0f, 1.0f));
+    QVector3D intersectionPoint(0, 0, 0);
 
-    QMatrix4x4 viewMatrix = m_view;
-    QMatrix4x4 modelViewMatrix = viewMatrix * m_model;
-    QMatrix4x4 modelViewProject = m_projection * modelViewMatrix;
-    QMatrix4x4 inverted = viewportMatrix * modelViewProject;
+    QMatrix4x4 proj_inv = m_projection.inverted();
+    QMatrix4x4 view_inv = m_view.inverted();
+    QMatrix4x4 model_inv = m_model.inverted();
+    QMatrix4x4 inverse = model_inv * view_inv * m_projection;
+    QVector4D point = invertedViewProjection * rayClip;
 
-    inverted = inverted.inverted();
-
-    float posZ;
-    // float posY = height() - pt.y() - 1.0f;
-
-    glReadPixels(static_cast<int>(pt.x()), static_cast<int>(pt.y()), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
-
-    QVector4D clickedPointOnScreen(static_cast<float>(pt.x()), static_cast<float>(pt.y()), 2.0f * posZ - 1.0f, 1.0f);
-    QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
-
-    // return clickedPointIn3DOrgn.toVector3D();
-
-    // Inversion of the viewport transformation
-    // QMatrix4x4 invertedViewport;
-    // invertedViewport.setToIdentity();
-    // invertedViewport.scale(1.0 / width(), 1.0 / height(), 1.0);
-
-    // QVector4D screenCoordinates = invertedViewport * normalized;
-
-    // QMatrix4x4 invertedProjection = projection.inverted();
-
-    // QMatrix4x4 invertedModelView = modelView.inverted();
-
-    // QVector4D modelCoordinates = invertedModelView * invertedProjection * screenCoordinates;
-
-    // return modelCoordinates.toVector3D();
-
-    float x = (2.0f * pt.x()) / width() - 1.0f;
-    float y = 1.0f - (2.0f * pt.y()) / height();
-
-    QVector4D rayClip(x, y, -1.0f, 1.0f);
-
-    QMatrix4x4 invertedProjection = m_projection.inverted();
-    QVector4D rayEye = invertedProjection * rayClip;
-    rayEye.setZ(-1.0f);
-    rayEye.setW(0.0f);
-
-    QMatrix4x4 invertedView = m_view.inverted();
-    QVector4D rayWorld = invertedView * rayEye;
-    rayWorld.normalize();
-
-    QVector3D intersectionPoint = camera->getPosition() - (cam_position.z() / rayWorld.z()) * rayWorld.toVector3D();
-    qDebug() << "Intersection Point: " << intersectionPoint;
-
-    return intersectionPoint;
-
+    // intersectionPoint = camera->getPosition() - (camera->getPosition().z() / world.z()) * world;
+    return (rayClip.toVector3D() * m_model);
 }
 
 float GLWidget::getAmplitudeMAX()
@@ -903,4 +1401,9 @@ void GLWidget::setAmplitudeMAX(float ampl)
 void GLWidget::setAmplitudeMIN(float ampl)
 {
     amplitude_min = ampl;
+}
+
+void GLWidget::setDegrePente(float deg)
+{
+    degre_de_pente_tolere = deg;
 }

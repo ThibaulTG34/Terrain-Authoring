@@ -2,6 +2,7 @@
 in vec4 vertex;
 in vec3 normal;
 in vec2 texture_coordonnees;
+// in float hauteur;
 
 out vec3 v_position;
 out vec3 v_normal;
@@ -14,15 +15,19 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform mat3 normal_matrix;
 
-uniform float radius;
-uniform vec3 center;
 uniform bool tool_active;
+uniform bool height_tool;
 
 uniform vec3 mean;
 
 uniform sampler2D heightmap;
+uniform sampler2D heightmap_tool;
+uniform sampler2D NEW_hmap_tool;
 uniform float amplitudeMAX;
 uniform float amplitudeMIN;
+
+uniform vec2 textureSize;
+
 
 out float ampl;
 
@@ -32,11 +37,24 @@ void main() {
     vec4 new_position;
     if(tool_active)
     {
-        new_position = vertex;
-        height_ = vertex.y;
+        float height = texture(heightmap_tool, texture_coordonnees).r;
+        ampl = amplitudeMAX;
+
+        height = (height * (amplitudeMAX - amplitudeMIN)) + amplitudeMIN;
+
+        height_ = height;
+        new_position = vec4(vertex.x, height, vertex.z, 1.0);
+    }
+    else if(height_tool)
+    {
+        float height = texture(NEW_hmap_tool, texture_coordonnees).r;
+        ampl = amplitudeMAX;
+
+        height = (height * (amplitudeMAX - amplitudeMIN)) + amplitudeMIN;
+        height_ = height;
+        new_position = vec4(vertex.x, height, vertex.z, 1.0);
     }
     else{
-
         float height = texture(heightmap, texture_coordonnees).r;
         ampl = amplitudeMAX;
 
@@ -44,9 +62,8 @@ void main() {
 
         height_ = height;
         new_position = vec4(vertex.x, height, vertex.z, 1.0);
-    
     }
-    
+
     v_position = new_position.xyz;
     v_normal = mat3(transpose(inverse(model))) * normal;
     gl_Position = projection * view * model * new_position;

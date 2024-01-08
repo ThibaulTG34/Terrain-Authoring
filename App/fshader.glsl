@@ -13,8 +13,13 @@ uniform vec3 lightColor;
 uniform float radius;
 uniform vec3 center;
 
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
 float color_factor;
 uniform sampler2D biome;
+uniform sampler2D water;
 
 in float ampl;
 
@@ -34,9 +39,16 @@ uniform sampler2D glacialB;
 uniform sampler2D glacialM;
 uniform sampler2D glacialT;
 
+uniform sampler2D waterText;
+
 uniform vec2 textureSize;
 
 uniform bool tool_active;
+uniform bool height_tool;
+uniform bool tree_active;
+
+
+uniform sampler2D heightmap_tool;
 
 
 vec4 canyon_rouge =vec4(0.341, 0.341, 0.341, 1.0);
@@ -98,9 +110,9 @@ void initTexelWithHauteur(vec2 uv){
 }
 
 vec4 getFromBiome() {
-      
-
-      vec2 texelSize=vec2(1.0/322,1.0/317);
+      vec2 texelSize=vec2(1,1);
+      if(textureSize!=vec2(0,0))
+        texelSize=vec2(1.0/textureSize.x,1.0/textureSize.y);
       int nbPixelsPris=0;
       int nbTexelOfABiome[NB_BIOMES];
       for(int i=0;i<NB_BIOMES;i++){
@@ -159,31 +171,46 @@ void main() {
    // diffuse 
    vec3 norm = normalize(v_normal);
    vec3 lightDir = normalize(light_position - v_position);
-   float diff = max(dot(norm, lightDir), 0.0);
+   float diff = max(dot(norm, lightDir), 0.3);
    vec3 diffuse = diff * lightColor;
 
    //specular
-   float specularStrenght = 0.5;
-   vec3 viewDir = normalize(viewPos - v_position);
-   vec3 reflectDir = normalize(lightDir + viewDir);
-   float spec = pow(max(dot(norm, reflectDir), 0.0), 128.0);
-   vec3 specular = spec * lightColor;
+   // float specularStrenght = 0.2;
+   // vec3 viewDir = normalize(viewPos - v_position);
+   // vec3 reflectDir = normalize(lightDir + viewDir);
+   // float spec = pow(max(dot(norm, reflectDir), 0.0), 256.0);
+   // vec3 specular = spec * lightColor;
 
-   vec3 result = (ambient + diffuse + specular) * getFromBiome().xyz;
-   fragColor = vec4(result, 1.0);
+   vec3 result;
+   if(texture(water,uvs).x>0.1)
+      result = (ambient + diffuse) * getFromBiome().xyz;
+   else
+      result=(ambient + diffuse) * texture(waterText,uvs).xyz;
+   fragColor = vec4(result,1);
 
-   vec2 v_pos = v_position.xz;
-   vec2 center_pos = center.xz;
-   if(tool_active)
+   // vec4 c = inverse(projection) * vec4(center, 1.0) * inverse(view);
+   // c.w = 0;
+   // normalize(c);
+   // vec3 inters = vec3(0,0,0);
+   // inters = cam_pos - (cam_pos.z / c.z) * c.xyz;
+
+   vec3 v_pos = v_position.xyz;
+   vec3 center_pos = (height_ != 0) ? vec3(center.x, height_, center.z) : vec3(center.x, 0, center.z);
+   if(tool_active || height_tool || tree_active)
+   {
+      float dist = distance(center_pos, v_pos);
+      if(dist < radius)
       {
-         if(distance(center_pos, v_pos) < radius)
-         {
-            fragColor = vec4((fragColor.xyz + vec3(0, 0, 0))/2, 0.5);
-         }
-         if(radius - 0.005 <= distance(center_pos, v_pos) && distance(center_pos, v_pos) <= radius)
-         {
-            fragColor = vec4(0, 0, 0, 1);
-         }
+         fragColor = vec4((v_position.xyz + vec3(0, 0, 0))/2, 0.1);
       }
+      if(radius - 0.005 <= dist && dist <= radius)
+      {
+         fragColor = vec4(0, 0, 0, 1);
+      }
+      // if(dist < 0.09)
+      // {
+      //    fragColor = vec4(1,1,0,1);
+      // } 
+   }
    
 }

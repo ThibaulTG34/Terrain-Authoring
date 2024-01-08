@@ -100,7 +100,7 @@ Window::Window(MainWindow *mw)
     ToolSide->addWidget(FPS);
     ToolSide->setAlignment(FPS, Qt::AlignTop);
     ToolSideContainer->setStyleSheet("padding: 0 ; margin: 0;");
-    ToolSideContainer->setFixedSize(120, 600);
+    ToolSideContainer->setFixedSize(120, 660);
 
     QWidget *BackgroundTools = new QWidget();
     BackgroundTools->setFixedSize(QSize(100, 500));
@@ -129,9 +129,14 @@ Window::Window(MainWindow *mw)
         tool2->setStyleSheet("background-color:grey");
         tool1->setStyleSheet("background-color:rgb(180,180,180)");
         tool3->setStyleSheet("background-color:grey");
+        tool5->setStyleSheet("background-color:grey");
+        tool6->setStyleSheet("background-color:grey");
         tool4->setStyleSheet("background-color:grey"); });
 
     tool2 = new QPushButton();
+    QIcon iconSmooth("./smooth_icon.png");
+    tool2->setIcon(iconSmooth);
+    tool2->setIconSize(QSize(30, 30));
     tool2->setFixedSize(QSize(40, 40));
     tool2->setStyleSheet("background-color:grey");
     connect(tool2, &QPushButton::clicked, glWidget, &GLWidget::DrawCircle);
@@ -140,27 +145,76 @@ Window::Window(MainWindow *mw)
         tool1->setStyleSheet("background-color:grey");
         tool3->setStyleSheet("background-color:grey");
         tool4->setStyleSheet("background-color:grey");
+        tool5->setStyleSheet("background-color:grey");
+        tool6->setStyleSheet("background-color:grey");
         tool2->setStyleSheet("background-color:rgb(180,180,180)"); });
 
     tool3 = new QPushButton();
+     QIcon iconHeight("./height_icon.png");
+    tool3->setIcon(iconHeight);
+    tool3->setIconSize(QSize(30, 30));
     tool3->setFixedSize(QSize(40, 40));
     tool3->setStyleSheet("background-color:grey");
+    connect(tool3, &QPushButton::clicked, glWidget, &GLWidget::HeightTool);
     connect(tool3, &QPushButton::clicked, [=]()
             {
         tool1->setStyleSheet("background-color:grey");
         tool2->setStyleSheet("background-color:grey");
         tool4->setStyleSheet("background-color:grey");
-        tool3->setStyleSheet("background-color:rgb(180,180,180)"); });
+        tool3->setStyleSheet("background-color:rgb(180,180,180)"); 
+        tool6->setStyleSheet("background-color:rgb(180,180,180)"); 
+        tool5->setStyleSheet("background-color:grey");
+        });
 
     tool4 = new QPushButton();
+    QIcon iconTree("./tree_icon.png");
+    tool4->setIcon(iconTree);
+    tool4->setIconSize(QSize(30, 30));
     tool4->setFixedSize(QSize(40, 40));
     tool4->setStyleSheet("background-color:grey");
+    connect(tool4, &QPushButton::clicked, glWidget, &GLWidget::Tree_Tool);
     connect(tool4, &QPushButton::clicked, [=]()
             {
         tool1->setStyleSheet("background-color:grey");
         tool3->setStyleSheet("background-color:grey");
         tool2->setStyleSheet("background-color:grey");
-        tool4->setStyleSheet("background-color:rgb(180,180,180)"); });
+        tool4->setStyleSheet("background-color:rgb(180,180,180)");
+        tool5->setStyleSheet("background-color:grey");
+        tool6->setStyleSheet("background-color:grey");
+         });
+
+
+    tool5 = new QPushButton();
+    QIcon iconTreeDelete("./tree_icon_delete.png");
+    tool5->setIcon(iconTreeDelete);
+    tool5->setIconSize(QSize(30, 30));
+    tool5->setFixedSize(QSize(40, 40));
+    tool5->setStyleSheet("background-color:grey");
+    connect(tool5, &QPushButton::clicked, glWidget, &GLWidget::Tree_Tool_Delete);
+    connect(tool5, &QPushButton::clicked, [=]()
+            {
+        tool1->setStyleSheet("background-color:grey");
+        tool3->setStyleSheet("background-color:grey");
+        tool2->setStyleSheet("background-color:grey");
+        tool4->setStyleSheet("background-color:grey");
+        tool6->setStyleSheet("background-color:grey");
+        tool5->setStyleSheet("background-color:rgb(180,180,180)"); });
+
+    tool6 = new QPushButton();
+    QIcon iconEditBiome("./tree_icon_delete.png");
+    tool6->setIcon(iconTreeDelete);
+    tool6->setIconSize(QSize(30, 30));
+    tool6->setFixedSize(QSize(40, 40));
+    tool6->setStyleSheet("background-color:grey");
+    connect(tool6, &QPushButton::clicked, glWidget, &GLWidget::Tree_Tool_Delete);
+    connect(tool6, &QPushButton::clicked, [=]()
+            {
+        tool1->setStyleSheet("background-color:grey");
+        tool3->setStyleSheet("background-color:grey");
+        tool2->setStyleSheet("background-color:grey");
+        tool4->setStyleSheet("background-color:grey");
+        tool5->setStyleSheet("background-color:grey");
+        tool6->setStyleSheet("background-color:rgb(180,180,180)"); });
 
     QVBoxLayout *ToolsLayout = new QVBoxLayout;
     BackgroundTools->setLayout(ToolsLayout);
@@ -169,18 +223,20 @@ Window::Window(MainWindow *mw)
     ToolsLayout->addWidget(tool2);
     ToolsLayout->addWidget(tool3);
     ToolsLayout->addWidget(tool4);
+    ToolsLayout->addWidget(tool5);
+    ToolsLayout->addWidget(tool6);
 
     ToolsLayout->setAlignment(tool1, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool2, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool3, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool4, Qt::AlignHCenter);
+    ToolsLayout->setAlignment(tool5, Qt::AlignHCenter);
+    ToolsLayout->setAlignment(tool6, Qt::AlignHCenter);
 
     setLayout(mainLayout);
 
     setWindowTitle(tr("Qt OpenGL"));
 }
-
-
 
 void Window::keyPressEvent(QKeyEvent *e)
 {
@@ -210,6 +266,7 @@ void Window::keyPressEvent(QKeyEvent *e)
     {
         glWidget->angle_speed -= 0.02;
     }
+
 
     glWidget->keyPressEvent(e);
 }
@@ -253,20 +310,20 @@ void Window::BiomeModif(QString imgname)
     glWidget->UpdateBiome(imgname);
 }
 
+void Window::WaterModif(QString imgname)
+{
+    glWidget->UpdateWater(imgname);
+}
+
+void Window::VegeModif(QString imgname)
+{
+    glWidget->UpdateVegetation(QImage(imgname));
+}
+
 void Window::ChangeFPS(int fps)
 {
     FPS->setText(QString("FPS:%1").arg(fps));
 }
-
-// void Window::AmplitudeMIN(float v)
-// {
-
-// }
-
-// void Window::AmplitudeMAX(float v)
-// {
-
-// }
 
 void Window::UpdateAmplitudeMax(int v)
 {
@@ -278,4 +335,9 @@ void Window::UpdateAmplitudeMin(int v)
 {
     // emit AmplitudeMIN(v);
     glWidget->setAmplitudeMIN(float(v) / 10.f);
+}
+
+void Window::UpdateDegrePente(int v)
+{
+    glWidget->setDegrePente(v);
 }

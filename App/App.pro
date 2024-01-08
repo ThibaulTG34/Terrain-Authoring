@@ -1,6 +1,6 @@
 MOC_DIR = ./moc
 OBJECTS_DIR = ./obj
-LIBS = -lGLEW -lglfw -lGL  -lX11 -lpthread -lXrandr -lXi -lglut
+LIBS = -lGLEW -lglfw -lGL  -lX11 -lpthread -lXrandr -lXi -lglut -lassimp
 
 INCLUDEPATH += $$PWD
 
@@ -9,7 +9,8 @@ HEADERS       = glwidget.h \
                 mesh.h \
                 window.h \
                 mainwindow.h \
-                Camera.h
+                Camera.h \
+                AssimpModel.h
 
 SOURCES       = glwidget.cpp \
                 cartes.cpp \
@@ -17,7 +18,9 @@ SOURCES       = glwidget.cpp \
                 mesh.cpp \
                 window.cpp \
                 mainwindow.cpp \
-                Camera.cpp
+                Camera.cpp \
+                AssimpModel.cpp
+
 
 RESOURCES += \
     shaders.qrc

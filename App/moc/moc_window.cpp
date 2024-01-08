@@ -22,8 +22,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_Window_t {
-    QByteArrayData data[13];
-    char stringdata0[122];
+    QByteArrayData data[14];
+    char stringdata0[139];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -44,13 +44,14 @@ QT_MOC_LITERAL(8, 60, 9), // "initRiver"
 QT_MOC_LITERAL(9, 70, 9), // "ChangeFPS"
 QT_MOC_LITERAL(10, 80, 3), // "fps"
 QT_MOC_LITERAL(11, 84, 18), // "UpdateAmplitudeMax"
-QT_MOC_LITERAL(12, 103, 18) // "UpdateAmplitudeMin"
+QT_MOC_LITERAL(12, 103, 18), // "UpdateAmplitudeMin"
+QT_MOC_LITERAL(13, 122, 16) // "UpdateDegrePente"
 
     },
     "Window\0AmplitudeMIN\0\0v\0AmplitudeMAX\0"
     "initTexture\0p\0initRidge\0initRiver\0"
     "ChangeFPS\0fps\0UpdateAmplitudeMax\0"
-    "UpdateAmplitudeMin"
+    "UpdateAmplitudeMin\0UpdateDegrePente"
 };
 #undef QT_MOC_LITERAL
 
@@ -60,7 +61,7 @@ static const uint qt_meta_data_Window[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-       8,   14, // methods
+       9,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -68,16 +69,17 @@ static const uint qt_meta_data_Window[] = {
        2,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    1,   54,    2, 0x06 /* Public */,
-       4,    1,   57,    2, 0x06 /* Public */,
+       1,    1,   59,    2, 0x06 /* Public */,
+       4,    1,   62,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       5,    1,   60,    2, 0x0a /* Public */,
-       7,    1,   63,    2, 0x0a /* Public */,
-       8,    1,   66,    2, 0x0a /* Public */,
-       9,    1,   69,    2, 0x0a /* Public */,
-      11,    1,   72,    2, 0x0a /* Public */,
-      12,    1,   75,    2, 0x0a /* Public */,
+       5,    1,   65,    2, 0x0a /* Public */,
+       7,    1,   68,    2, 0x0a /* Public */,
+       8,    1,   71,    2, 0x0a /* Public */,
+       9,    1,   74,    2, 0x0a /* Public */,
+      11,    1,   77,    2, 0x0a /* Public */,
+      12,    1,   80,    2, 0x0a /* Public */,
+      13,    1,   83,    2, 0x0a /* Public */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::Float,    3,
@@ -88,6 +90,7 @@ static const uint qt_meta_data_Window[] = {
     QMetaType::Void, QMetaType::QPixmap,    6,
     QMetaType::Void, QMetaType::QPixmap,    6,
     QMetaType::Void, QMetaType::Int,   10,
+    QMetaType::Void, QMetaType::Int,    3,
     QMetaType::Void, QMetaType::Int,    3,
     QMetaType::Void, QMetaType::Int,    3,
 
@@ -108,6 +111,7 @@ void Window::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 5: _t->ChangeFPS((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 6: _t->UpdateAmplitudeMax((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 7: _t->UpdateAmplitudeMin((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 8: _t->UpdateDegrePente((*reinterpret_cast< int(*)>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -158,13 +162,13 @@ int Window::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 8)
+        if (_id < 9)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 8;
+        _id -= 9;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 8)
+        if (_id < 9)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 8;
+        _id -= 9;
     }
     return _id;
 }

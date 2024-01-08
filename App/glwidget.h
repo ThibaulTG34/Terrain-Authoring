@@ -68,6 +68,8 @@
 #include <QTimer>
 #include <QCursor>
 #include <Camera.h>
+#include "AssimpModel.h"
+#include <QMessageBox>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
@@ -86,10 +88,12 @@ public:
 
     QSize minimumSizeHint() const override;
     QSize sizeHint() const override;
-    Mesh object=Mesh(0);
+    Mesh object = Mesh(0);
     void UpdateResolution(int res);
     void UpdateTerrain(QString imgname);
     void UpdateBiome(QString imgname);
+    void UpdateWater(QString imgname);
+    void UpdateVegetation(QImage imgname);
 
     int getResolution();
     void keyPressEvent(QKeyEvent *e);
@@ -100,6 +104,8 @@ public:
 
     void setAmplitudeMAX(float ampl);
     void setAmplitudeMIN(float ampl);
+
+    void setDegrePente(float deg);
 
     bool wireframe;
     bool control_press;
@@ -122,8 +128,10 @@ public slots:
     void setZRotation(int angle);
     void cleanup();
     void DrawCircle();
+    void Tree_Tool();
+    void Tree_Tool_Delete();
     void Hand_Tool();
-
+    void HeightTool();
 
 signals:
 
@@ -154,15 +162,21 @@ protected:
     }
 
 private:
-    glm::mat4 convertQMatrixToGLM(const QMatrix4x4 &qMatrix);
     void setupVertexAttribs();
     QVector3D GetWorldPosition(QPointF pt);
+    void initVegeThread(QImage imgname);
+    void Load(QVector3D v);
+    AssimpModel *canyon_model;
+    AssimpModel *snow_model;
+    AssimpModel *mountain_model;
+    AssimpModel *desert_model;
     bool m_core;
     int m_xRot;
     int m_yRot;
     int m_zRot;
     QPoint m_last_position;
     QOpenGLShaderProgram *m_program;
+    QOpenGLShaderProgram *vege_shader;
     int m_mvp_matrix_loc;
     int m_normal_matrix_loc;
     int m_light_pos_loc;
@@ -175,18 +189,26 @@ private:
     float objectRotationY = 0;
 
     int mouseX, mouseY;
+    QPointF mousePos;
+
     float radius_sphere_selection = 0.3f;
     QVector3D worldPosition;
     QImage heightMAP;
+    QImage heightMAP_generated;
+    QImage heightMAP_smooth;
     QVector<float> heightMapDATA;
     QVector2D Image_biome_size;
 
     bool hm_active = false;
     QOpenGLTexture *hmap;
+    QOpenGLTexture *hmap_tool;
+    QOpenGLTexture *NEW_hmap_tool;
     float amplitude_max;
     float amplitude_min;
 
+    QOpenGLTexture *water;
     QOpenGLTexture *biome;
+    QImage biome_img;
 
     QOpenGLTexture *desertB;
     QOpenGLTexture *desertM;
@@ -200,12 +222,16 @@ private:
     QOpenGLTexture *montagneM;
     QOpenGLTexture *montagneT;
 
-    
     QOpenGLTexture *glacialB;
     QOpenGLTexture *glacialM;
     QOpenGLTexture *glacialT;
 
+    QOpenGLTexture *waterText;
 
+    QOpenGLTexture *vegeText;
+    int degre_de_pente_tolere;
+
+    bool applySmooth = false;
     bool mouseRightPressed = false;
     bool mouseLeftPressed = false;
     bool mouseMiddlePressed = false;
@@ -214,7 +240,11 @@ private:
     int lastZoom = 0;
     Camera *camera;
 
-    bool tool_active;
+    bool tool_active = false;
+    bool height_tool = false;
+    bool tree_active = false;
+    bool tree_active_delete=false;
+    
 
     QVector3D cam_position;
     QVector3D cam_front;
@@ -222,13 +252,23 @@ private:
 
     QVector<QVector2D> biome_data;
 
+    QVector<AssimpModel *> vegetation;
+    QImage vegetation_map;
+    int selectedVege=-1;
+
     QOpenGLVertexArrayObject vao_;
     QOpenGLBuffer vertexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     QOpenGLBuffer indexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
     QOpenGLBuffer normalsBuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     QOpenGLBuffer m_texturebuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    QOpenGLBuffer m_texturebufferForVege = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    // QOpenGLBuffer hauteursBuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 
     // QOpenGLBuffer m_biomebuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    // QOpenGLBuffer VegeVertexBuffer_ = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    // QOpenGLBuffer VegeUvsBuffer_ = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    // QOpenGLBuffer VegeIndicesBuffer_ = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+    QOpenGLVertexArrayObject Vegevao_;
 };
 
 #endif

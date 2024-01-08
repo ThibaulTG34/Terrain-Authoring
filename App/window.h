@@ -72,10 +72,11 @@ class Window : public QWidget
 
 public:
     Window(MainWindow *mw);
-    void TerrainModif(QString hauteurs);
-    void BiomeModif(QString hauteurs);
+    void TerrainModif(QString imgname);
+    void BiomeModif(QString imgname);
+    void WaterModif(QString imgname);
+    void VegeModif(QString imgname);
     QLabel *FPS;
-
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -92,6 +93,7 @@ public slots:
     void ChangeFPS(int fps);
     void UpdateAmplitudeMax(int v);
     void UpdateAmplitudeMin(int v);
+    void UpdateDegrePente(int v);
 
 private:
     GLWidget *glWidget;
@@ -100,6 +102,8 @@ private:
     QPushButton *tool2;
     QPushButton *tool3;
     QPushButton *tool4;
+    QPushButton *tool5;
+    QPushButton *tool6;
     
     Cartes *maps;
 

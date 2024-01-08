@@ -33,12 +33,14 @@ public:
     QLabel *rivieres;
     QVector<char> hauteurs;
     QVector<char> biomes;
+    bool biomeIsSet=false;
     QVector<char> vege;
     QVector<char> water;
     Window *w;
     QSlider *amplitudeMAX;
     QSlider *amplitudeMIN;
-
+    QSlider *degrePente;
+    
 signals:
     void UpdateSliderMax(float v);
     void UpdateSliderMin(float v);

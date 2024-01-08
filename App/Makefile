@@ -40,7 +40,7 @@ DISTNAME      = App1.0.0
 DISTDIR = /mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App/obj/App1.0.0
 LINK          = g++
 LFLAGS        = -Wl,-O1
-LIBS          = $(SUBLIBS) -lGLEW -lglfw -lX11 -lXrandr -lXi -lglut /usr/lib/x86_64-linux-gnu/libQt5Widgets.so /usr/lib/x86_64-linux-gnu/libQt5Gui.so /usr/lib/x86_64-linux-gnu/libQt5Core.so -lGL -lpthread   
+LIBS          = $(SUBLIBS) -lGLEW -lglfw -lX11 -lXrandr -lXi -lglut -lassimp /usr/lib/x86_64-linux-gnu/libQt5Widgets.so /usr/lib/x86_64-linux-gnu/libQt5Gui.so /usr/lib/x86_64-linux-gnu/libQt5Core.so -lGL -lpthread   
 AR            = ar cqs
 RANLIB        = 
 SED           = sed
@@ -58,7 +58,8 @@ SOURCES       = glwidget.cpp \
 		mesh.cpp \
 		window.cpp \
 		mainwindow.cpp \
-		Camera.cpp qrc_shaders.cpp \
+		Camera.cpp \
+		AssimpModel.cpp qrc_shaders.cpp \
 		moc/moc_glwidget.cpp \
 		moc/moc_cartes.cpp \
 		moc/moc_window.cpp \
@@ -70,6 +71,7 @@ OBJECTS       = obj/glwidget.o \
 		obj/window.o \
 		obj/mainwindow.o \
 		obj/Camera.o \
+		obj/AssimpModel.o \
 		obj/qrc_shaders.o \
 		obj/moc_glwidget.o \
 		obj/moc_cartes.o \
@@ -159,13 +161,15 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		mesh.h \
 		window.h \
 		mainwindow.h \
-		Camera.h glwidget.cpp \
+		Camera.h \
+		AssimpModel.h glwidget.cpp \
 		cartes.cpp \
 		main.cpp \
 		mesh.cpp \
 		window.cpp \
 		mainwindow.cpp \
-		Camera.cpp
+		Camera.cpp \
+		AssimpModel.cpp
 QMAKE_TARGET  = App
 DESTDIR       = 
 TARGET        = App
@@ -356,8 +360,8 @@ distdir: FORCE
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents shaders.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents glwidget.h cartes.h mesh.h window.h mainwindow.h Camera.h $(DISTDIR)/
-	$(COPY_FILE) --parents glwidget.cpp cartes.cpp main.cpp mesh.cpp window.cpp mainwindow.cpp Camera.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents glwidget.h cartes.h mesh.h window.h mainwindow.h Camera.h AssimpModel.h $(DISTDIR)/
+	$(COPY_FILE) --parents glwidget.cpp cartes.cpp main.cpp mesh.cpp window.cpp mainwindow.cpp Camera.cpp AssimpModel.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -387,7 +391,9 @@ compiler_rcc_clean:
 qrc_shaders.cpp: shaders.qrc \
 		/usr/lib/qt5/bin/rcc \
 		vshader.glsl \
-		fshader.glsl
+		fshader.glsl \
+		vshader_vege.glsl \
+		fshader_vege.glsl
 	/usr/lib/qt5/bin/rcc -name shaders shaders.qrc -o qrc_shaders.cpp
 
 compiler_moc_predefs_make_all: moc/moc_predefs.h
@@ -403,6 +409,7 @@ moc/moc_glwidget.cpp: glwidget.h \
 		logo.h \
 		mesh.h \
 		Camera.h \
+		AssimpModel.h \
 		moc/moc_predefs.h \
 		/usr/lib/qt5/bin/moc
 	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include glwidget.h -o moc/moc_glwidget.cpp
@@ -426,7 +433,8 @@ moc/moc_window.cpp: window.h \
 	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include window.h -o moc/moc_window.cpp
 
 moc/moc_mainwindow.cpp: mainwindow.h \
-		diffusionterrain.h \
+		window.h \
+		cartes.h \
 		basics.h \
 		vec.h \
 		moc/moc_predefs.h \
@@ -452,7 +460,8 @@ compiler_clean: compiler_rcc_clean compiler_moc_predefs_clean compiler_moc_heade
 obj/glwidget.o: glwidget.cpp glwidget.h \
 		logo.h \
 		mesh.h \
-		Camera.h
+		Camera.h \
+		AssimpModel.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/glwidget.o glwidget.cpp
 
 obj/cartes.o: cartes.cpp cartes.h \
@@ -465,8 +474,10 @@ obj/main.o: main.cpp glwidget.h \
 		logo.h \
 		mesh.h \
 		Camera.h \
+		AssimpModel.h \
 		mainwindow.h \
-		diffusionterrain.h \
+		window.h \
+		cartes.h \
 		basics.h \
 		vec.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/main.o main.cpp
@@ -478,24 +489,26 @@ obj/window.o: window.cpp glwidget.h \
 		logo.h \
 		mesh.h \
 		Camera.h \
+		AssimpModel.h \
 		window.h \
 		cartes.h \
 		basics.h \
 		vec.h \
-		mainwindow.h \
-		diffusionterrain.h
+		mainwindow.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/window.o window.cpp
 
 obj/mainwindow.o: mainwindow.cpp mainwindow.h \
-		diffusionterrain.h \
-		basics.h \
-		vec.h \
 		window.h \
-		cartes.h
+		cartes.h \
+		basics.h \
+		vec.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/mainwindow.o mainwindow.cpp
 
 obj/Camera.o: Camera.cpp Camera.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/Camera.o Camera.cpp
+
+obj/AssimpModel.o: AssimpModel.cpp AssimpModel.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/AssimpModel.o AssimpModel.cpp
 
 obj/qrc_shaders.o: qrc_shaders.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/qrc_shaders.o qrc_shaders.cpp
