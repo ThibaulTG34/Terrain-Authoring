@@ -256,7 +256,7 @@ private:
 
     bool tool_active = false;
     bool height_tool = false;
-    bool water_tool = false;
+    bool water_active = false;
     bool tree_active = false;
     bool tree_active_delete=false;
     bool biome_edit_active=false;

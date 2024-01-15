@@ -256,7 +256,7 @@ Window::Window(MainWindow *mw)
         else
         {
             this->setTool_to_Active(7);
-            SLOT(w->Water_Tool());
+            glWidget->Water_Tool();
         } });
   
     QVBoxLayout *ToolsLayout = new QVBoxLayout;

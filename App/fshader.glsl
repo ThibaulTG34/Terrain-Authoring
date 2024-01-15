@@ -47,7 +47,7 @@ uniform bool tool_active;
 uniform bool height_tool;
 uniform bool tree_active;
 uniform bool biome_edit_active;
-uniform bool water_tool;
+uniform bool water_active;
 
 uniform float alt_min;
 uniform float alt_max;
@@ -203,7 +203,7 @@ void main() {
 
    vec3 v_pos = v_position.xyz;
    vec3 center_pos = (height_ != 0) ? vec3(center.x, height_, center.z) : vec3(center.x, 0, center.z);
-   if(tool_active || height_tool || tree_active || biome_edit_active || water_tool)
+   if(tool_active || height_tool || tree_active || biome_edit_active || water_active)
    {
       float dist = distance(center_pos, v_pos);
       if(dist < radius)
@@ -214,10 +214,6 @@ void main() {
       {
          fragColor = vec4(0, 0, 0, 1);
       }
-      // if(dist < 0.09)
-      // {
-      //    fragColor = vec4(1,1,0,1);
-      // } 
    }
    
 }

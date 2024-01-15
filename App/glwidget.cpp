@@ -524,9 +524,10 @@ void GLWidget::paintGL()
     m_program->setUniformValue(m_program->uniformLocation("height_tool"), height_tool);
     m_program->setUniformValue(m_program->uniformLocation("tree_active"), tree_active);
     m_program->setUniformValue(m_program->uniformLocation("biome_edit_active"), biome_edit_active);
-    m_program->setUniformValue(m_program->uniformLocation("water_tool"), water_tool);
+    m_program->setUniformValue(m_program->uniformLocation("water_active"), water_active);
+    std::cout << water_active << std::endl;
 
-    if (tool_active || height_tool || tree_active || biome_edit_active || water_tool)
+    if (tool_active || height_tool || tree_active || biome_edit_active || water_active)
     {
         m_program->setUniformValue(m_program->uniformLocation("center"), worldPosition);
         m_program->setUniformValue(m_program->uniformLocation("radius"), radius_sphere_selection);
@@ -837,7 +838,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
             UpdateVegetation(vegetation_map);
         }
 
-        if (water_tool)
+        if (water_active)
         {
             QVector3D target = worldPosition;
 
@@ -1270,19 +1271,19 @@ void GLWidget::keyPressEvent(QKeyEvent *e)
     {
         shift_press = true;
     }
-    if (e->key() == Qt::Key_I && (height_tool || tool_active || tree_active || biome_edit_active || water_tool))
+    if (e->key() == Qt::Key_I && (height_tool || tool_active || tree_active || biome_edit_active || water_active))
     {
         worldPosition.setZ(worldPosition.z() - 0.05);
     }
-    else if (e->key() == Qt::Key_K && (height_tool || tool_active || tree_active || biome_edit_active || water_tool))
+    else if (e->key() == Qt::Key_K && (height_tool || tool_active || tree_active || biome_edit_active || water_active))
     {
         worldPosition.setZ(worldPosition.z() + 0.05);
     }
-    if (e->key() == Qt::Key_J && (height_tool || tool_active || tree_active || biome_edit_active || water_tool))
+    if (e->key() == Qt::Key_J && (height_tool || tool_active || tree_active || biome_edit_active || water_active))
     {
         worldPosition.setX(worldPosition.x() - 0.05);
     }
-    else if (e->key() == Qt::Key_L && (height_tool || tool_active || tree_active || biome_edit_active || water_tool))
+    else if (e->key() == Qt::Key_L && (height_tool || tool_active || tree_active || biome_edit_active || water_active))
     {
         worldPosition.setX(worldPosition.x() + 0.05);
     }
@@ -1342,7 +1343,7 @@ void GLWidget::DrawCircle()
     tree_active = false;
     tree_active_delete = false;
     biome_edit_active = false;
-    water_tool = false;
+    water_active = false;
 }
 
 void GLWidget::Hand_Tool()
@@ -1354,7 +1355,7 @@ void GLWidget::Hand_Tool()
     tree_active = false;
     tree_active_delete = false;
     biome_edit_active = false;
-    water_tool = false;
+    water_active = false;
 }
 
 void GLWidget::HeightTool(int type)
@@ -1367,7 +1368,7 @@ void GLWidget::HeightTool(int type)
     tree_active = false;
     tree_active_delete = false;
     biome_edit_active = false;
-    water_tool = false;
+    water_active = false;
 }
 
 void GLWidget::Tree_Tool()
@@ -1379,7 +1380,7 @@ void GLWidget::Tree_Tool()
     tree_active_delete = false;
     tree_active = true;
     biome_edit_active = false;
-    water_tool = false;
+    water_active = false;
 }
 
 void GLWidget::Tree_Tool_Delete()
@@ -1391,7 +1392,7 @@ void GLWidget::Tree_Tool_Delete()
     tree_active_delete = true;
     tree_active = false;
     biome_edit_active = false;
-    water_tool = false;
+    water_active = false;
 }
 
 void GLWidget::Water_Tool()
@@ -1402,7 +1403,7 @@ void GLWidget::Water_Tool()
     tree_active_delete = false;
     tree_active = false;
     biome_edit_active = false;
-    water_tool = true;
+    water_active = true;
 }
 
 void GLWidget::Biome_Tool()
@@ -1412,7 +1413,7 @@ void GLWidget::Biome_Tool()
     tree_active_delete = false;
     tree_active = false;
     biome_edit_active = true;
-    water_tool = false;
+    water_active = false;
 }
 
 QVector3D GLWidget::GetWorldPosition(QPointF pt)

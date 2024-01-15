@@ -1,6 +1,6 @@
 MOC_DIR = ./moc
 OBJECTS_DIR = ./obj
-LIBS = -lGLEW -lglfw -lGL  -lX11 -lpthread -lXrandr -lXi -lglut -lassimp
+LIBS = -lGL  -lX11 -lpthread -lXrandr -lXi -lglut -lassimp
 
 INCLUDEPATH += $$PWD
 
