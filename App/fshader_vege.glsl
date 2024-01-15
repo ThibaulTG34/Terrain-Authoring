@@ -10,7 +10,6 @@ uniform vec3 light_position;
 uniform vec3 lightColor;
 uniform bool selected;
 
-
 void main()
 {
 
@@ -25,6 +24,7 @@ void main()
    vec3 lightDir = normalize(light_position - position_);
    float diff = max(dot(norm, lightDir), 0.3);
    vec3 diffuse = diff * lightColor;
+
     if(!selected){
         fragColor =vec4((ambient + diffuse) * texture(text_tree, uvs_).xyz,1.0);
     }else{

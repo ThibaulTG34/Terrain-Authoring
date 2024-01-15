@@ -377,6 +377,16 @@ void GLWidget::initializeGL()
     // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
 
     // worldPosition = QVector3D(0, 0, 0);
+
+    // QGraphicsScene scene;
+    // scene.setSceneRect(-100.0, -100.0, 200.0, 200.0);
+
+    // QGraphicsItem *item = new QGraphicsEllipseItem(-50.0, -50.0, 100.0, 100.0, Q_NULLPTR);
+    // scene.addItem(item);
+
+    // QGraphicsView view(&scene);
+    // view.setRenderHints(QPainter::Antialiasing);
+    // view.show();
 }
 
 void GLWidget::paintGL()
@@ -513,10 +523,11 @@ void GLWidget::paintGL()
     m_program->setUniformValue(m_program->uniformLocation("tool_active"), tool_active);
     m_program->setUniformValue(m_program->uniformLocation("height_tool"), height_tool);
     m_program->setUniformValue(m_program->uniformLocation("tree_active"), tree_active);
+    m_program->setUniformValue(m_program->uniformLocation("biome_edit_active"), biome_edit_active);
+    m_program->setUniformValue(m_program->uniformLocation("water_tool"), water_tool);
 
-    if (tool_active || height_tool || tree_active)
+    if (tool_active || height_tool || tree_active || biome_edit_active || water_tool)
     {
-        // qDebug()<<"chlab"<<worldPosition;
         m_program->setUniformValue(m_program->uniformLocation("center"), worldPosition);
         m_program->setUniformValue(m_program->uniformLocation("radius"), radius_sphere_selection);
     }
@@ -532,7 +543,9 @@ void GLWidget::paintGL()
 
     m_program->setUniformValue(m_program->uniformLocation("lightColor"), QVector3D(1.0f, 1.0f, 1.0f));
     m_program->setUniformValue(m_program->uniformLocation("viewPos"), m_model * QVector3D(0, -2, 0));
-    // m_program->setUniformValue(m_program->uniformLocation("cam_pos"), camera->getPosition());
+
+    m_program->setUniformValue(m_program->uniformLocation("alt_min"), alt_min);
+    m_program->setUniformValue(m_program->uniformLocation("alt_max"), alt_max);
 
     if (!mouseRightPressed && !mouseLeftPressed && !mouseMiddlePressed)
         setMouseTracking(true);
@@ -544,6 +557,7 @@ void GLWidget::paintGL()
     vao_.bind();
 
     m_program->bind();
+
     glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_SHORT, (void *)0);
 
     glEnableVertexAttribArray(1);
@@ -599,8 +613,9 @@ void GLWidget::paintGL()
     // m.rotate(180.0f - (m_xRot / 16.0f), 1, 0, 0);
     // m.rotate(m_yRot / 16.0f, 0, 1, 0);
     // vege.setModelMatrix(m);
-    m_program->setUniformValue(m_program->uniformLocation("light_position"), m_model * QVector3D(0, -3, 0));
-    m_program->setUniformValue(m_program->uniformLocation("lightColor"), QVector3D(1.0f, 1.0f, 1.0f));
+    vege_shader->setUniformValue(vege_shader->uniformLocation("light_position"), m_model * QVector3D(0, -3, 0));
+    vege_shader->setUniformValue(vege_shader->uniformLocation("lightColor"), QVector3D(1.0f, 1.0f, 1.0f));
+
     std::mt19937 gen(vegetation.size()); // La graine est ici 42, vous pouvez la modifier
     std::uniform_int_distribution<> distribution(0, 360);
 
@@ -736,17 +751,13 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 
         if (tool_active)
         {
-            // heightMAP = QImage("./newHeight.png");
             object.SmoothMoyenneur(radius_sphere_selection, worldPosition, amplitude_min, amplitude_max, heightMAP_smooth);
             hmap_tool = new QOpenGLTexture(heightMAP_smooth);
         }
         if (height_tool)
         {
-            // NEW_hmap_tool = new QOpenGLTexture(heightMAP);
-            object.GenerateHeight(radius_sphere_selection, worldPosition, heightMAP_generated, shift_press);
+            object.GenerateHeight(radius_sphere_selection, worldPosition, heightMAP_generated, shift_press, type_of_height);
             NEW_hmap_tool = new QOpenGLTexture(heightMAP_generated);
-            // hmap = new QOpenGLTexture(heightMAP);
-            // hmap_tool = new QOpenGLTexture(heightMAP);
 
             amplitude_min = 0.1f;
             amplitude_max = 2.0f;
@@ -754,14 +765,11 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
         }
         if (tree_active)
         {
-            int densite = 10;
             QVector3D target = worldPosition;
-            float distMin = target.distanceToPoint(object.vertices[0]);
-
             for (size_t i = 1; i < object.vertices.size(); i++)
             {
                 float dist = target.distanceToPoint(object.vertices[i]);
-                if (dist < radius_sphere_selection && rand() % densite == 8)
+                if (dist < radius_sphere_selection && rand() % densite == 0)
                 {
                     vegetation_map.setPixel(object.uvs[i].x() * (vegetation_map.width() - 1), object.uvs[i].y() * (vegetation_map.height() - 1), qRgb(0, 255, 0));
                 }
@@ -769,6 +777,132 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
             vegetation_map.save("./newVege.png");
             UpdateVegetation(vegetation_map);
         }
+
+        if (biome_edit_active)
+        {
+            QVector3D target = worldPosition;
+
+            float min_x = 1000;
+            float max_x = 0;
+            float min_y = 1000;
+            float max_y = 0;
+            for (size_t i = 0; i < object.vertices.size(); i++)
+            {
+                float dist = target.distanceToPoint(object.vertices[i]);
+                if (dist < radius_sphere_selection)
+                {
+                    if (object.uvs[i].x() < min_x)
+                    {
+                        min_x = object.uvs[i].x();
+                    }
+
+                    if (object.uvs[i].x() > max_x)
+                    {
+                        max_x = object.uvs[i].x();
+                    }
+
+                    if (object.uvs[i].y() < min_y)
+                    {
+                        min_y = object.uvs[i].y();
+                    }
+
+                    if (object.uvs[i].x() > max_y)
+                    {
+                        max_y = object.uvs[i].y();
+                    }
+                    // biome_img.setPixel(object.uvs[i].x() * (biome_img.width() - 1), object.uvs[i].y() * (biome_img.height() - 1), qRgb(255, 255, 255));
+                }
+            }
+            min_x *= biome_img.width() - 1;
+            max_x *= biome_img.width() - 1;
+            min_y *= biome_img.height() - 1;
+            max_y *= biome_img.height() - 1;
+
+            QVector2D center_in_image = QVector2D((max_x + min_x) / 2, (max_y + min_y) / 2);
+            int rayon_in_image = (max_x - min_x) / 2;
+
+            for (size_t i = 0; i < biome_img.width(); i++)
+            {
+                for (size_t j = 0; j < biome_img.height(); j++)
+                {
+                    double distance = std::sqrt((i - center_in_image.x()) * (i - center_in_image.x()) + (j - center_in_image.y()) * (j - center_in_image.y()));
+                    if (distance <= rayon_in_image)
+                    {
+                        biome_img.setPixel(i, j, qRgb(biome_ref, biome_ref, biome_ref));
+                    }
+                }
+            }
+
+            biome = new QOpenGLTexture(biome_img.convertToFormat(QImage::Format_Grayscale8));
+            UpdateVegetation(vegetation_map);
+        }
+
+        if (water_tool)
+        {
+            QVector3D target = worldPosition;
+
+            float min_x = 1000;
+            float max_x = 0;
+            float min_y = 1000;
+            float max_y = 0;
+            for (size_t i = 0; i < object.vertices.size(); i++)
+            {
+                float dist = target.distanceToPoint(object.vertices[i]);
+                if (dist < radius_sphere_selection)
+                {
+                    if (object.uvs[i].x() < min_x)
+                    {
+                        min_x = object.uvs[i].x();
+                    }
+
+                    if (object.uvs[i].x() > max_x)
+                    {
+                        max_x = object.uvs[i].x();
+                    }
+
+                    if (object.uvs[i].y() < min_y)
+                    {
+                        min_y = object.uvs[i].y();
+                    }
+
+                    if (object.uvs[i].x() > max_y)
+                    {
+                        max_y = object.uvs[i].y();
+                    }
+                }
+            }
+            min_x *= water_img.width() - 1;
+            max_x *= water_img.width() - 1;
+            min_y *= water_img.height() - 1;
+            max_y *= water_img.height() - 1;
+
+            QVector2D center_in_image = QVector2D((max_x + min_x) / 2, (max_y + min_y) / 2);
+            int rayon_in_image = (max_x - min_x) / 2;
+
+            for (size_t i = 0; i < water_img.width(); i++)
+            {
+                for (size_t j = 0; j < water_img.height(); j++)
+                {
+                    double distance = std::sqrt((i - center_in_image.x()) * (i - center_in_image.x()) + (j - center_in_image.y()) * (j - center_in_image.y()));
+                    if (distance <= rayon_in_image)
+                    {
+                        if (shift_press)
+                        {
+                            water_img.setPixel(i, j, qRgb(255, 255, 255));
+                        }
+                        else
+                        {
+                            water_img.setPixel(i, j, qRgb(0, 0, 0));
+                        }
+                    }
+                }
+            }
+
+            water = new QOpenGLTexture(water_img.convertToFormat(QImage::Format_Grayscale8));
+            UpdateVegetation(vegetation_map);
+        }
+
+        // UpdateVegetation(vegetation_map);
 
         // if(height_tool && shift_press)
         // {
@@ -843,37 +977,10 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
             firstMouse = false;
         }
 
-        // QVector3D right = QVector3D::crossProduct((camera->getTarget() - camera->getPosition()), camera->getUp());
         float deltaX = mouseX - lastX;
         float deltaY = lastY - mouseY;
         lastX = mouseX;
         lastY = mouseY;
-
-        // deltaX *= camera->getMvtSpeed()*2;
-        // deltaY *= camera->getMvtSpeed()*2;
-        // camera->setYaw(camera->getYaw() + deltaX);
-        // camera->setPitch(camera->getPitch() + deltaY);
-
-        // // if (camera->getPitch() > 89.f)
-        // // {
-        // //     camera->setPitch(89.f);
-        // // }
-
-        // //   if (camera->getPitch() < -89.f)
-        // // {
-        // //     camera->setPitch(-89.f);
-        // // }
-
-        // QVector3D direction=QVector3D(0,0,0);
-        // direction.setX(cos(glm::radians(camera->getYaw()))*cos(glm::radians(camera->getYaw())));
-        // direction.setY(sin(glm::radians(camera->getPitch())));
-
-        // direction.setZ(sin(glm::radians(camera->getYaw()) * cos(glm::radians(camera->getPitch()))));
-        // direction.normalize();
-        // std::cout << direction[0] <<' '<<direction[1]<<' '<<direction[2] <<std::endl;
-        // frontdemerde=(-direction);
-
-        // std::cout << "x : " << m_xRot << std::endl;
 
         setXRotation(m_xRot + 2.5 * deltaY);
         setYRotation(m_yRot + 2.5 * deltaX);
@@ -961,9 +1068,7 @@ void GLWidget::UpdateTerrain(QString imgname)
     amplitude_max = 2.0f;
 
     m_program->bind();
-    // hauteursBuffer.bind();
-    // hauteursBuffer.allocate(heightMapDATA.constData(), heightMapDATA.size() * sizeof(float));
-    // hauteursBuffer.release();
+
     hm_active = true;
 }
 
@@ -989,8 +1094,11 @@ void GLWidget::UpdateBiome(QString imgname)
 void GLWidget::UpdateWater(QString imgname)
 {
     QImage img = QImage(imgname);
+    water_img = QImage(imgname);
     img = img.convertToFormat(QImage::Format_Grayscale8);
     water = new QOpenGLTexture(img);
+    if (!vegetation_map.isNull())
+        UpdateVegetation(vegetation_map);
 }
 
 void GLWidget::UpdateVegetation(QImage imgname)
@@ -1012,10 +1120,14 @@ void GLWidget::initVegeThread(QImage img)
         int green = qGreen(img.pixel(object.uvs[i].x() * (img.width() - 1), object.uvs[i].y() * (img.height() - 1)));
         int blue = qBlue(img.pixel(object.uvs[i].x() * (img.width() - 1), object.uvs[i].y() * (img.height() - 1)));
         int red = qRed(img.pixel(object.uvs[i].x() * (img.width() - 1), object.uvs[i].y() * (img.height() - 1)));
-        if (green == 255 && red == 0 && blue == 0)
+        int waterVal = 255;
+        if (!water_img.isNull())
+            waterVal = qGray(water_img.pixel(object.uvs[i].x() * (water_img.width() - 1), object.uvs[i].y() * (water_img.height() - 1)));
+        if (green == 255 && red == 0 && blue == 0 && waterVal == 255)
         {
             AssimpModel *A = new AssimpModel();
             int biomeVal = qGray(biome_img.pixel(object.uvs[i].x() * (biome_img.width() - 1), object.uvs[i].y() * (biome_img.height() - 1)));
+
             if (biomeVal == 87)
             {
                 A->setVertices(canyon_model->getVertices());
@@ -1050,6 +1162,55 @@ void GLWidget::initVegeThread(QImage img)
             // qDebug() << object.uvs[i];
         }
         // qDebug() << i << "/" << object.vertices.size();
+    }
+}
+
+void GLWidget::Ask_saveChanges()
+{
+    if (height_tool || tool_active)
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+
+        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
+        int ret = msgBox.exec();
+
+        if (ret == QMessageBox::Yes)
+        {
+            // Action si l'utilisateur clique sur "Oui"
+            // Remplacez cette partie avec votre action souhaitée
+            if (height_tool)
+            {
+                heightMAP = heightMAP_generated;
+                heightMAP_smooth = heightMAP_generated;
+                hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+                hmap = new QOpenGLTexture(heightMAP);
+            }
+            if (tool_active)
+            {
+                heightMAP = heightMAP_smooth;
+                heightMAP_generated = heightMAP_smooth;
+                hmap = new QOpenGLTexture(heightMAP);
+                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+            }
+        }
+
+        if (ret == QMessageBox::No)
+        {
+            if (height_tool)
+            {
+                heightMAP_generated = heightMAP;
+                NEW_hmap_tool = new QOpenGLTexture(heightMAP_generated);
+            }
+
+            if (tool_active)
+            {
+                heightMAP_smooth = heightMAP;
+                hmap_tool = new QOpenGLTexture(heightMAP_smooth);
+            }
+        }
     }
 }
 
@@ -1109,19 +1270,19 @@ void GLWidget::keyPressEvent(QKeyEvent *e)
     {
         shift_press = true;
     }
-    if (e->key() == Qt::Key_I && (height_tool || tool_active || tree_active))
+    if (e->key() == Qt::Key_I && (height_tool || tool_active || tree_active || biome_edit_active || water_tool))
     {
         worldPosition.setZ(worldPosition.z() - 0.05);
     }
-    else if (e->key() == Qt::Key_K && (height_tool || tool_active || tree_active))
+    else if (e->key() == Qt::Key_K && (height_tool || tool_active || tree_active || biome_edit_active || water_tool))
     {
         worldPosition.setZ(worldPosition.z() + 0.05);
     }
-    if (e->key() == Qt::Key_J && (height_tool || tool_active || tree_active))
+    if (e->key() == Qt::Key_J && (height_tool || tool_active || tree_active || biome_edit_active || water_tool))
     {
         worldPosition.setX(worldPosition.x() - 0.05);
     }
-    else if (e->key() == Qt::Key_L && (height_tool || tool_active || tree_active))
+    else if (e->key() == Qt::Key_L && (height_tool || tool_active || tree_active || biome_edit_active || water_tool))
     {
         worldPosition.setX(worldPosition.x() + 0.05);
     }
@@ -1173,214 +1334,123 @@ void GLWidget::keyReleaseEvent(QKeyEvent *e)
 
 void GLWidget::DrawCircle()
 {
-    if (height_tool)
-    {
-        QMessageBox msgBox;
-        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::Yes);
-
-        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
-        int ret = msgBox.exec();
-        if (ret == QMessageBox::Yes)
-        {
-            if (height_tool)
-            {
-                heightMAP = heightMAP_generated;
-                heightMAP_smooth = heightMAP_generated;
-                hmap_tool = new QOpenGLTexture(heightMAP_smooth);
-                hmap = new QOpenGLTexture(heightMAP);
-            }
-            if (tool_active)
-            {
-                heightMAP = heightMAP_smooth;
-                heightMAP_generated = heightMAP_smooth;
-                hmap = new QOpenGLTexture(heightMAP);
-                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
-            }
-        }
-    }
+    Ask_saveChanges();
 
     tool_active = true;
     height_tool = false;
     tree_active = false;
+    tree_active = false;
+    tree_active_delete = false;
+    biome_edit_active = false;
+    water_tool = false;
 }
 
 void GLWidget::Hand_Tool()
 {
-    if (height_tool || tool_active)
-    {
-        QMessageBox msgBox;
-        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::Yes);
-
-        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
-        int ret = msgBox.exec();
-
-        // Traitement de la réponse de l'utilisateur
-        if (ret == QMessageBox::Yes)
-        {
-            // Action si l'utilisateur clique sur "Oui"
-            // Remplacez cette partie avec votre action souhaitée
-            if (height_tool)
-            {
-                heightMAP = heightMAP_generated;
-                heightMAP_smooth = heightMAP_generated;
-                hmap_tool = new QOpenGLTexture(heightMAP_smooth);
-                hmap = new QOpenGLTexture(heightMAP);
-            }
-            if (tool_active)
-            {
-                heightMAP = heightMAP_smooth;
-                heightMAP_generated = heightMAP_smooth;
-                hmap = new QOpenGLTexture(heightMAP);
-                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
-            }
-        }
-    }
+    Ask_saveChanges();
 
     tool_active = false;
     height_tool = false;
     tree_active = false;
     tree_active_delete = false;
+    biome_edit_active = false;
+    water_tool = false;
 }
 
-void GLWidget::HeightTool()
+void GLWidget::HeightTool(int type)
 {
-    if (tool_active)
-    {
+    Ask_saveChanges();
 
-        QMessageBox msgBox;
-        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::Yes);
-
-        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
-        int ret = msgBox.exec();
-
-        if (ret == QMessageBox::Yes)
-        {
-            // Action si l'utilisateur clique sur "Oui"
-            // Remplacez cette partie avec votre action souhaitée
-            if (tool_active)
-            {
-                heightMAP = heightMAP_smooth;
-                heightMAP_generated = heightMAP_smooth;
-                hmap = new QOpenGLTexture(heightMAP);
-                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
-            }
-        }
-    }
-
+    type_of_height = type;
     height_tool = true;
     tool_active = false;
     tree_active = false;
     tree_active_delete = false;
+    biome_edit_active = false;
+    water_tool = false;
 }
 
 void GLWidget::Tree_Tool()
 {
-    if (height_tool || tool_active)
-    {
-
-        QMessageBox msgBox;
-        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::Yes);
-
-        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
-        int ret = msgBox.exec();
-
-        if (ret == QMessageBox::Yes)
-        {
-            if (height_tool)
-            {
-                heightMAP = heightMAP_generated;
-                heightMAP_smooth = heightMAP_generated;
-                hmap_tool = new QOpenGLTexture(heightMAP_smooth);
-                hmap = new QOpenGLTexture(heightMAP);
-            }
-            if (tool_active)
-            {
-                heightMAP = heightMAP_smooth;
-                heightMAP_generated = heightMAP_smooth;
-                hmap = new QOpenGLTexture(heightMAP);
-                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
-            }
-        }
-    }
+    Ask_saveChanges();
 
     height_tool = false;
     tool_active = false;
     tree_active_delete = false;
     tree_active = true;
+    biome_edit_active = false;
+    water_tool = false;
 }
 
 void GLWidget::Tree_Tool_Delete()
 {
-    if (height_tool || tool_active)
-    {
-        QMessageBox msgBox;
-        msgBox.setText("Voulez-vous sauvegarder vos changements ?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::Yes);
-
-        // Affichage de la boîte de dialogue et attente de la réponse de l'utilisateur
-        int ret = msgBox.exec();
-
-        if (ret == QMessageBox::Yes)
-        {
-            // Action si l'utilisateur clique sur "Oui"
-            // Remplacez cette partie avec votre action souhaitée
-            if (height_tool)
-            {
-                heightMAP = heightMAP_generated;
-                heightMAP_smooth = heightMAP_generated;
-                hmap_tool = new QOpenGLTexture(heightMAP_smooth);
-                hmap = new QOpenGLTexture(heightMAP);
-            }
-            if (tool_active)
-            {
-                heightMAP = heightMAP_smooth;
-                heightMAP_generated = heightMAP_smooth;
-                hmap = new QOpenGLTexture(heightMAP);
-                NEW_hmap_tool = new QOpenGLTexture(heightMAP_smooth);
-            }
-        }
-    }
+    Ask_saveChanges();
 
     height_tool = false;
     tool_active = false;
     tree_active_delete = true;
     tree_active = false;
+    biome_edit_active = false;
+    water_tool = false;
+}
+
+void GLWidget::Water_Tool()
+{
+    Ask_saveChanges();
+    height_tool = false;
+    tool_active = false;
+    tree_active_delete = false;
+    tree_active = false;
+    biome_edit_active = false;
+    water_tool = true;
+}
+
+void GLWidget::Biome_Tool()
+{
+    height_tool = false;
+    tool_active = false;
+    tree_active_delete = false;
+    tree_active = false;
+    biome_edit_active = true;
+    water_tool = false;
 }
 
 QVector3D GLWidget::GetWorldPosition(QPointF pt)
 {
+
     float x_n = (pt.x() - 0.0f) / width();
     float y_n = (pt.y() - 0.0f) / height();
     float x = (2.0f * x_n) - 1.0f;
     float y = 1.0f - (2.0f * y_n);
+    // qDebug()<<"x"<<x<<"y"<<y;
 
     QMatrix4x4 invertedViewProjection = (m_projection * m_view).inverted();
 
-    QVector4D rayClip(x, 0, y, 1.0f);
+    QVector4D rayClip(x, 0, -y, 1.0f);
     // QMatrix4x4 inverted = m_view.inverted() * m_projection.inverted();
     // QVector4D rayEye = m_projection.inverted() * rayClip;
     // rayEye.setZ(-1.0f);
     // rayEye.setW(0.0f);
 
-    QVector3D intersectionPoint(0, 0, 0);
+    // QVector3D intersectionPoint(0, 0, 0);
 
-    QMatrix4x4 proj_inv = m_projection.inverted();
-    QMatrix4x4 view_inv = m_view.inverted();
-    QMatrix4x4 model_inv = m_model.inverted();
-    QMatrix4x4 inverse = model_inv * view_inv * m_projection;
-    QVector4D point = invertedViewProjection * rayClip;
+    // QMatrix4x4 proj_inv = m_projection.inverted();
+    // QMatrix4x4 view_inv = m_view.inverted();
+    // QMatrix4x4 model_inv = m_model.inverted();
+    // QMatrix4x4 inverse = model_inv * view_inv * proj_inv;
+    // QVector4D point = proj_inv * rayClip;
+    // point=view_inv*point;
+    // point=model_inv*point;
+    // QVector3D var=(rayClip.toVector3DAffine());
+    // var.setY(0);
+    // qDebug()<<"var"<<var;
+    // intersectionPoint = camera->getPosition() - (camera->getPosition().z() / var.z()) * var;
+    QVector3D j = QVector3D(pt.x(), pt.y(), 0);
 
-    // intersectionPoint = camera->getPosition() - (camera->getPosition().z() / world.z()) * world;
-    return (rayClip.toVector3D() * m_model);
+    QVector3D var = j.unproject(m_view * m_model, m_projection, QRect(0, 0, width(), height()));
+    // qDebug()<<"intersectionPoint"<<var;
+
+    return var;
 }
 
 float GLWidget::getAmplitudeMAX()
@@ -1406,4 +1476,25 @@ void GLWidget::setAmplitudeMIN(float ampl)
 void GLWidget::setDegrePente(float deg)
 {
     degre_de_pente_tolere = deg;
+}
+
+void GLWidget::setDensite(int dens)
+{
+    densite = dens;
+}
+
+void GLWidget::setAltMIN(float min)
+{
+    alt_min = min;
+}
+
+void GLWidget::setBiomeRef(int new_biome_ref)
+{
+    biome_ref = new_biome_ref;
+}
+
+void GLWidget::setAltMAX(float max)
+{
+    alt_max = max;
+    // std::cout << "v : " << alt_max << std::endl;
 }

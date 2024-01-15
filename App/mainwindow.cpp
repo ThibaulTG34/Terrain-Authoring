@@ -52,14 +52,11 @@
 #include <QMenuBar>
 #include <QMenu>
 #include <QMessageBox>
- 
+
 MainWindow::MainWindow()
 {
-
- if (!centralWidget())
-        w=new Window(this);
+        if (!centralWidget())
+                w = new Window(this);
         setCentralWidget(w);
         this->showMaximized();
-
 }
-

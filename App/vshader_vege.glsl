@@ -38,5 +38,6 @@ void main()
         new_position = vec4(vertex.x, height+vertex.y, vertex.z, 1.0);  
     }
     position_=new_position.xyz;
+
     gl_Position = projection * view * model * new_position;
 }

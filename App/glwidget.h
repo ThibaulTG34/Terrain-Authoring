@@ -71,6 +71,10 @@
 #include "AssimpModel.h"
 #include <QMessageBox>
 
+#include <QGraphicsEllipseItem>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
@@ -105,7 +109,12 @@ public:
     void setAmplitudeMAX(float ampl);
     void setAmplitudeMIN(float ampl);
 
+    void setAltMAX(float max);
+    void setAltMIN(float min);
+    void setBiomeRef(int  new_biome_ref);
+
     void setDegrePente(float deg);
+    void setDensite(int dens);
 
     bool wireframe;
     bool control_press;
@@ -121,6 +130,8 @@ public:
     int last_count;
     int frame_count;
 
+    int type_of_height;
+
 public slots:
     // Completer : ajouter des slots pour signaler appliquer le changement de rotation
     void setXRotation(int angle);
@@ -130,8 +141,10 @@ public slots:
     void DrawCircle();
     void Tree_Tool();
     void Tree_Tool_Delete();
+    void Water_Tool();
+    void Biome_Tool();
     void Hand_Tool();
-    void HeightTool();
+    void HeightTool(int type);
 
 signals:
 
@@ -207,6 +220,7 @@ private:
     float amplitude_min;
 
     QOpenGLTexture *water;
+    QImage  water_img;
     QOpenGLTexture *biome;
     QImage biome_img;
 
@@ -242,9 +256,16 @@ private:
 
     bool tool_active = false;
     bool height_tool = false;
+    bool water_tool = false;
     bool tree_active = false;
     bool tree_active_delete=false;
+    bool biome_edit_active=false;
+    int biome_ref=-1;
+
+    void Ask_saveChanges();
     
+    float alt_max;
+    float alt_min;
 
     QVector3D cam_position;
     QVector3D cam_front;
@@ -254,6 +275,7 @@ private:
 
     QVector<AssimpModel *> vegetation;
     QImage vegetation_map;
+    int densite=80;
     int selectedVege=-1;
 
     QOpenGLVertexArrayObject vao_;

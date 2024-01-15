@@ -56,7 +56,6 @@
 #include <QVector3D>
 #include <cartes.h>
 
-
 QT_BEGIN_NAMESPACE
 class QSlider;
 class QPushButton;
@@ -94,6 +93,9 @@ public slots:
     void UpdateAmplitudeMax(int v);
     void UpdateAmplitudeMin(int v);
     void UpdateDegrePente(int v);
+    void UpdateDensite(int v);
+    void UpdateAltMax(float v);
+    void UpdateAltMin(float v);
 
 private:
     GLWidget *glWidget;
@@ -104,9 +106,11 @@ private:
     QPushButton *tool4;
     QPushButton *tool5;
     QPushButton *tool6;
-    
-    Cartes *maps;
+    QPushButton *tool7;
+    void setTool_to_Active(int t);
 
+
+    Cartes *maps;
 
     QLabel *texture;
     QVector<QVector3D> texture_data;
@@ -116,6 +120,7 @@ private:
 
     QLabel *rivieres;
     QVector<QVector3D> rivieres_data;
+    bool water_is_set=false;
 
     MainWindow *mainWindow;
 };

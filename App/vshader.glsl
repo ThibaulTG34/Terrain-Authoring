@@ -29,16 +29,16 @@ uniform float amplitudeMIN;
 uniform vec2 textureSize;
 
 
-out float ampl;
+out vec2 ampl;
 
 
 void main() {
     uvs = texture_coordonnees;
     vec4 new_position;
+    ampl = vec2(amplitudeMIN,amplitudeMAX);
     if(tool_active)
     {
         float height = texture(heightmap_tool, texture_coordonnees).r;
-        ampl = amplitudeMAX;
 
         height = (height * (amplitudeMAX - amplitudeMIN)) + amplitudeMIN;
 
@@ -48,7 +48,6 @@ void main() {
     else if(height_tool)
     {
         float height = texture(NEW_hmap_tool, texture_coordonnees).r;
-        ampl = amplitudeMAX;
 
         height = (height * (amplitudeMAX - amplitudeMIN)) + amplitudeMIN;
         height_ = height;
@@ -56,7 +55,6 @@ void main() {
     }
     else{
         float height = texture(heightmap, texture_coordonnees).r;
-        ampl = amplitudeMAX;
 
         height = (height * (amplitudeMAX - amplitudeMIN)) + amplitudeMIN;
 

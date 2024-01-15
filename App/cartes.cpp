@@ -61,7 +61,36 @@ Cartes::Cartes(QWidget *parent)
     gradientSide->addWidget(amplitudeMAX);
     connect(amplitudeMAX, SIGNAL(valueChanged(int)), w, SLOT(UpdateAmplitudeMax(int)));
 
-    //////////////////////////////////////////////////////////
+    // QDialog pour regler les valeurs des transitions pour les hauteurs
+    QPushButton *reglages = new QPushButton("réglages transitions");
+    gradientSide->addWidget(reglages);
+    dialog.setWindowTitle("Réglages des transitions");
+    connect(reglages, &QPushButton::clicked, this, &Cartes::OuvrirReglages);
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+
+    QLabel *label1 = new QLabel("1er transition (min):");
+    alt_min = new QSlider(Qt::Horizontal);
+    alt_min->setRange(0, 20);
+    alt_min->setValue(0);
+    // alt_min->setPageStep(20 * 0.05);
+    alt_min->setTickInterval(1);
+
+    QLabel *label2 = new QLabel("2nd transition (max):");
+    alt_max = new QSlider(Qt::Horizontal);
+    alt_max->setRange(0, 20);
+    alt_max->setValue(0);
+    // alt_max->setPageStep(20 * 0.005);
+    alt_max->setTickInterval(1);
+
+    layout->addWidget(label1);
+    layout->addWidget(alt_min);
+    layout->addWidget(label2);
+    layout->addWidget(alt_max);
+    connect(alt_min, &QSlider::valueChanged, this, &Cartes::HandleAltMinValueChanged);
+    connect(alt_max, &QSlider::valueChanged, this, &Cartes::HandleAltMinValueChanged);
+
+    dialog.setLayout(layout);
+    ///////////////////////////////////////////////////////////
 
     ////////////////// Texture--Biome ////////////////////////
     QVBoxLayout *textureSide = new QVBoxLayout;
@@ -149,6 +178,24 @@ Cartes::Cartes(QWidget *parent)
     vegetationSide->setAlignment(degrePente, Qt::AlignTop);
     vegetationSide->setAlignment(degrepente, Qt::AlignTop | Qt::AlignHCenter);
 
+     QLabel *densite = new QLabel(this);
+    densite->setText("Densité de végétation :");
+    vegetationSide->addWidget(densite);
+
+    
+    QSlider *densiteSlider = new QSlider(Qt::Horizontal);
+    densiteSlider->setRange(6, 80);
+    densiteSlider->setSingleStep(4);
+    densiteSlider->setTickInterval(4);
+    densiteSlider->setTickPosition(QSlider::TicksRight);
+
+    densiteSlider->setValue(6);
+    densiteSlider->setFixedSize(160,25);
+    vegetationSide->addWidget(densiteSlider);
+    connect(densiteSlider, SIGNAL(valueChanged(int)), w, SLOT(UpdateDensite(int)));
+    vegetationSide->setAlignment(densiteSlider, Qt::AlignTop);
+    vegetationSide->setAlignment(densiteSlider, Qt::AlignTop | Qt::AlignHCenter);
+
     ////////////////////////////////////////////////////////////
 
     ////////////////// Water ////////////////////////
@@ -176,6 +223,27 @@ Cartes::Cartes(QWidget *parent)
     waterSide->setContentsMargins(0, 0, 0, 0);
 
     ////////////////////////////////////////////////////////////
+}
+
+void Cartes::HandleAltMinValueChanged(int value)
+{
+    if (alt_min->value() >= alt_max->value())
+    {
+        if (alt_max->value() == 20)
+        {
+            float tmp = alt_min->value();
+            alt_min->setValue(alt_max->value()-1);
+            alt_max->setValue(tmp);
+        }
+        else
+        {
+            float tmp = alt_min->value();
+            alt_min->setValue(alt_max->value());
+            alt_max->setValue(tmp+1);
+        }
+    }
+    w->UpdateAltMin((float)alt_min->value()/10.0f);
+    w->UpdateAltMax((float)alt_max->value()/10.0f);
 }
 
 QSlider *Cartes::createSlider()
@@ -303,6 +371,12 @@ void Cartes::initMapBiome()
         }
         w->BiomeModif(fileName);
     }
+}
+
+void Cartes::OuvrirReglages()
+{
+    dialog.exec();
+    // std::cout << "/* message */" << std::endl;
 }
 
 // void Cartes::UpdateSliderMin(float v)

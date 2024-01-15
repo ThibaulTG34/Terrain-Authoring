@@ -20,7 +20,7 @@ Mesh::Mesh(int mode, int res)
     if (mode == 0)
     {
         resolution = res;
-        CreateFlatTerrain(1, 16);
+        CreateFlatTerrain(1, 96);
     }
 }
 
@@ -44,121 +44,274 @@ float gaussian(float x, float sigma)
     return exp(-0.5 * (x * x) / (sigma * sigma));
 }
 
-void Mesh::SmoothMoyenneur(float r, QVector3D c, float min, float max, QImage &hmap)
+QVector<QVector2D> Mesh::GetMinMaxCoord(QVector3D c, float r, QImage &hmap)
 {
-    int width = hmap.width() - 1;
-    int height = hmap.height() - 1;
-    float dist = 0;
-
-    QVector<Pixel> neighbors;
-
-    float smoothedHeightSum = 0.f;
-    float weightSum = 0.0;
-
-    for (int i = 0; i < this->vertices.size(); i++)
-    {
-        dist = norm(c, vertices[i]);
-
-        if (dist <= r)
-        {
-            QRgb pixelColor_current = hmap.pixel(uvs[i].x() * (hmap.width() - 1), uvs[i].y() * (hmap.height() - 1));
-            QRgb pixelColor_after = hmap.pixel(uvs[i + 1].x() * (hmap.width() - 1), uvs[i + 1].y() * (hmap.height() - 1));
-            QRgb pixelColor_before = hmap.pixel(uvs[i - 1].x() * (hmap.width() - 1), uvs[i - 1].y() * (hmap.height() - 1));
-            int grayValue_curr = qGray(pixelColor_current);
-            int grayValue_aft = qGray(pixelColor_after);
-            int grayValue_bef = qGray(pixelColor_before);
-
-            float L = 0.5 * (grayValue_aft - grayValue_curr) + 0.5 * (grayValue_bef - grayValue_curr);
-
-            float res = grayValue_curr + 0.5 * L;
-
-            int v = static_cast<int>(res);
-
-            // Pixel p;
-            // p.coord = QVector2D(uvs[i].x(), uvs[i].y());
-            // p.distance = dist;
-            // neighbors.append(p);
-            hmap.setPixel(uvs[i].x() * (hmap.width() - 1), uvs[i].y() * (hmap.height() - 1), qRgb(v, v, v));
-        }
-    }
-
-    // int value = 0;
-    // float sumWeights = 0.0f;
-    // int max_ = 0;
-    // int min_ = hmap.pixel(0, 0);
-    // QVector2D coord_min;
-    // QVector2D coord_max;
-    // for (Pixel neighbor : neighbors)
-    // {
-    //     int nx = static_cast<int>(neighbor.coord.x() * (width));
-    //     int ny = static_cast<int>(neighbor.coord.y() * (height));
-
-    // float weight = exp(-(neighbor.distance * neighbor.distance) / (r * r));
-    // QRgb pixelColor = hmap.pixel(nx, ny);
-    // int grayValue = qGray(pixelColor);
-
-    // if (max_ < grayValue)
-    // {
-    //     max_ = grayValue;
-    //     coord_max = QVector2D(nx, ny);
-    // }
-    // if (min_ > grayValue)
-    // {
-    //     min_ = grayValue;
-    //     coord_min = QVector2D(nx, ny);
-    // }
-
-    // int v = grayValue * weight;
-    // v = sin(v);
-    // v *= 255;
-    // v = static_cast<int>(v);
-    // std::cout << "v : " << v << std::endl;
-    // if (v > 255)
-    //     v = 255;
-    // else if (v < 0)
-    //     v = 0;
-    // }
-
-    // int diff = max_ - min_;
-    // max_ = qGray(hmap.pixel(coord_max.x(), coord_max.y())) - diff;
-    // min_ = qGray(hmap.pixel(coord_min.x(), coord_min.y())) + diff;
-    // hmap.setPixel(coord_max.x(), coord_max.y(), qRgb(max_, max_, max_));
-    // hmap.setPixel(coord_min.x(), coord_min.y(), qRgb(min_, min_, min_));
-
-    hmap.save("./modif.png");
-}
-
-void Mesh::GenerateHeight(float r, QVector3D c, QImage &hm, bool shift)
-{
+    float min_x = 1000;
+    float max_x = 0;
+    float min_y = 1000;
+    float max_y = 0;
     for (size_t i = 0; i < vertices.size(); i++)
     {
         float dist = norm(c, vertices[i]);
-
-        // std::cout << dist << std::endl;
-
-        if (dist <= r)
+        if (dist < r)
         {
-            float falloff = 1.0 - (dist / r);
+            if (uvs[i].x() < min_x)
+            {
+                min_x = uvs[i].x();
+            }
 
-            float heightChange = 0.5 * falloff;
-            QRgb pixelColor = hm.pixel(uvs[i].x() * (hm.width() - 1), uvs[i].y() * (hm.height() - 1));
-            int v = qGray(pixelColor);
-            // int v = static_cast<int>(heightChange * 255);
-            int hauteur = 20 * (1 - dist / r);
+            if (uvs[i].x() > max_x)
+            {
+                max_x = uvs[i].x();
+            }
 
-            if (!shift)
-                v += hauteur;
-            else
-                v -= hauteur;
+            if (uvs[i].y() < min_y)
+            {
+                min_y = uvs[i].y();
+            }
 
-            v = static_cast<int>(v);
+            if (uvs[i].x() > max_y)
+            {
+                max_y = uvs[i].y();
+            }
+        }
+    }
+    min_x *= hmap.width() - 1;
+    max_x *= hmap.width() - 1;
+    min_y *= hmap.height() - 1;
+    max_y *= hmap.height() - 1;
 
-            if (v > 255)
-                v = 255;
-            else if (v < 0)
-                v = 0;
+    QVector<QVector2D> v;
+    v.append(QVector2D(min_x, min_y));
+    v.append(QVector2D(max_x, max_y));
 
-            hm.setPixel(uvs[i].x() * (hm.width() - 1), uvs[i].y() * (hm.height() - 1), qRgb(v, v, v));
+    return v;
+}
+
+void Mesh::SmoothMoyenneur(float r, QVector3D c, float min, float max, QImage &hmap)
+{
+    // int width = hmap.width() - 1;
+    // int height = hmap.height() - 1;
+    // float dist = 0;
+
+    // QVector<Pixel> neighbors;
+
+    // float mean = 0.0f;
+
+    // for (int i = 0; i < this->vertices.size(); i++)
+    // {
+    //     dist = norm(c, vertices[i]);
+
+    //     if (dist <= r)
+    //     {
+    //         QRgb pixelColor_current = hmap.pixel(uvs[i].x() * (hmap.width() - 1), uvs[i].y() * (hmap.height() - 1));
+    //         // QRgb pixelColor_after = hmap.pixel(uvs[i + 1].x() * (hmap.width() - 1), uvs[i + 1].y() * (hmap.height() - 1));
+    //         // QRgb pixelColor_before = hmap.pixel(uvs[i - 1].x() * (hmap.width() - 1), uvs[i - 1].y() * (hmap.height() - 1));
+    //         int grayValue_curr = qGray(pixelColor_current);
+    //         // int grayValue_aft = qGray(pixelColor_after);
+    //         // int grayValue_bef = qGray(pixelColor_before);
+
+    //         // int diff = grayValue_curr - grayValue_aft;
+    //         // int diff1 = grayValue_curr - grayValue_bef;
+
+    //         // float res = grayValue_curr;
+    //         // float res2 = grayValue_curr;
+
+    //         // if (diff > 10 && diff1 > 10)
+    //         // {
+    //         //     res -= diff;
+    //         //     res2 += diff/2;
+    //         // }
+
+    //         // int v = static_cast<int>(res);
+    //         // int v2 = static_cast<int>(res2);
+
+    //         // hmap.setPixel(uvs[i].x() * (hmap.width() - 1), uvs[i].y() * (hmap.height() - 1), qRgb(v, v, v));
+    //         // hmap.setPixel(uvs[i - 1].x() * (hmap.width() - 1), uvs[i - 1].y() * (hmap.height() - 1), qRgb(v2, v2, v2));
+    //         // hmap.setPixel(uvs[i + 1].x() * (hmap.width() - 1), uvs[i + 1].y() * (hmap.height() - 1), qRgb(v2, v2, v2));
+
+    //         Pixel p;
+    //         p.coord = QVector2D(uvs[i].x() * (hmap.width() - 1), uvs[i].y() * (hmap.height() - 1));
+    //         p.distance = dist;
+    //         neighbors.append(p);
+    //         mean += grayValue_curr;
+    //     }
+    // }
+
+    // mean /= static_cast<float>(neighbors.size());
+    // QVector2D coord_min = Min(neighbors);
+
+    // for (Pixel neighbor : neighbors)
+    // {
+    //     int nx = static_cast<int>(neighbor.coord.x());
+    //     int ny = static_cast<int>(neighbor.coord.y());
+    //     QRgb pixelColor = hmap.pixel(nx, ny);
+    //     int grayValue = qGray(pixelColor);
+
+    //     float g = static_cast<float>(1.0f / static_cast<float>(qSqrt(M_PI))) * qExp(-0.5f * qPow(static_cast<float>(((neighbor.distance) * 10.0f)), 2.0f));
+    //     // g *= 100.0f;
+    //     qDebug() << "avant smooth (" << nx << "," << ny << ") : " << grayValue;
+    //     float h = static_cast<float>(grayValue) / 255.0f;
+    //     h = h * (max - min) + min;
+    //     float r = h * g;
+    //     if (r < 256)
+    //         grayValue = static_cast<int>(r);
+    //     else
+    //     {
+    //         grayValue = 255;
+    //     }
+
+    //     qDebug() << "apres smooth (" << nx << "," << ny << ") : " << grayValue;
+    //     qDebug() << "----------------------------";
+    //     hmap.setPixel(nx, ny, qRgb(grayValue, grayValue, grayValue));
+    // }
+
+    QVector<QVector2D> vect = GetMinMaxCoord(c, r, hmap);
+    float max_x = vect[1].x();
+    float max_y = vect[1].y();
+    float min_x = vect[0].x();
+    float min_y = vect[0].y();
+
+    QVector2D center_in_image = QVector2D((max_x + min_x) / 2, (max_y + min_y) / 2);
+    int rayon_in_image = (max_x - min_x) / 2;
+    for (size_t i = 0; i < hmap.width(); i++)
+    {
+        for (size_t j = 0; j < hmap.height(); j++)
+        {
+            float blur = 0;
+            float sum = 0;
+            float distance = std::sqrt((i - center_in_image.x()) * (i - center_in_image.x()) + (j - center_in_image.y()) * (j - center_in_image.y()));
+            if (distance <= rayon_in_image)
+            {
+                QRgb pixelColor = hmap.pixel(i, j);
+                int grayValue = qGray(pixelColor);
+                for (int k = -7; k < 7; k++)
+                {
+                    for (int l = -7; l < 7; l++)
+                    {
+                        int idx_i = i + k;
+                        int idx_j = j + l;
+
+                        // if (idx_i < 0)
+                        //     idx_i = 0;
+                        // if (idx_i >= hmap.width())
+                        //     idx_i = hmap.width() - 1;
+
+                        // if (idx_j < 0)
+                        //     idx_j = 0;
+                        // if (idx_j >= hmap.height())
+                        //     idx_j = hmap.height() - 1;
+
+                        if (idx_i < 0 || idx_i >= hmap.width())
+                        {
+                            idx_i = std::abs(idx_i) % (2 * hmap.width());
+                            idx_i = (idx_i >= hmap.width()) ? 2 * hmap.width() - 1 - idx_i : idx_i;
+                        }
+                        if (idx_j < 0 || idx_j >= hmap.height())
+                        {
+                            idx_j = std::abs(idx_j) % (2 * hmap.height());
+                            idx_j = (idx_j >= hmap.height()) ? 2 * hmap.height() - 1 - idx_j : idx_j;
+                        }
+
+                        QRgb pix = hmap.pixel(idx_i, idx_j);
+                        float g = std::exp(-(k * k + l * l) / (2.0f * 1.0f * 1.0f));
+
+                        // float w = (1.0f - static_cast<float>(distance / static_cast<float>(rayon_in_image)));
+                        blur += qGray(pix) * g;
+                        sum += g;
+                    }
+                }
+
+                if (sum != 0)
+                {
+                    float res = blur / sum;
+                    if (res > 256)
+                    {
+                        res = 255;
+                    }
+                    hmap.setPixel(i, j, qRgb(static_cast<int>(res), static_cast<int>(res), static_cast<int>(res)));
+                }
+            }
+        }
+    }
+    hmap.save("./modif.png");
+}
+
+//------- UTILE POUR LA GENERATION DES HAUTEURS --------
+// int nx = static_cast<int>(neighbor.coord.x());
+// int ny = static_cast<int>(neighbor.coord.y());
+// QRgb pixelColor = hmap.pixel(nx, ny);
+// int grayValue = qGray(pixelColor);
+
+// float g = static_cast<float>(1.0f / static_cast<float>(qSqrt(M_PI))) * qExp(-0.5f * qPow(static_cast<float>((neighbor.distance * 10.0f)), 2.0f));
+// g *= 100.0f;
+// qDebug() << "avant smooth (" << nx << "," << ny << ") : " << grayValue;
+
+// float r = static_cast<float>(grayValue) + g;
+// if (r < 256)
+//     grayValue = static_cast<int>(r);
+// else
+// {
+//     grayValue = 255;
+// }
+// ------------------------------------------------------
+
+void Mesh::GenerateHeight(float r, QVector3D c, QImage &hm, bool shift, int type)
+{
+    QVector<QVector2D> vect = GetMinMaxCoord(c, r, hm);
+    float max_x = vect[1].x();
+    float max_y = vect[1].y();
+    float min_x = vect[0].x();
+    float min_y = vect[0].y();
+
+    QVector2D center_in_image = QVector2D((max_x + min_x) / 2, (max_y + min_y) / 2);
+    int rayon_in_image = (max_x - min_x) / 2;
+    for (size_t i = 0; i < hm.width(); i++)
+    {
+        for (size_t j = 0; j < hm.height(); j++)
+        {
+            float distance = std::sqrt((i - center_in_image.x()) * (i - center_in_image.x()) + (j - center_in_image.y()) * (j - center_in_image.y()));
+
+            if (distance <= rayon_in_image)
+            {
+                QRgb pixelColor = hm.pixel(i, j);
+                int v = qGray(pixelColor);
+                int hauteur = 0;
+                float sigma = 20.0f;
+                switch (type)
+                {
+                case 1:
+                {
+                    float g = static_cast<float>(1.0f / static_cast<float>(qSqrt(M_PI))) * qExp(-0.5f * qPow(static_cast<float>((distance / (static_cast<float>(rayon_in_image) + 20.0f)) * 3.5f), 2.0f));
+                    g *= 100.0f;
+                    float res = static_cast<float>(v) + g*0.7f;
+                    if (res < 256)
+                        hauteur = static_cast<int>(res);
+                    else
+                        hauteur = 255;
+                    break;
+                }
+                case 2:
+                    hauteur = 20.0f * (1.0f - distance / static_cast<float>(rayon_in_image));
+                    break;
+                default:
+                    break;
+                }
+
+                if (!shift)
+                    v += hauteur;
+                else
+                    v *= 0.9;
+
+                v = static_cast<int>(v);
+
+                if (v > 255)
+                    v = 255;
+                else if (v < 0)
+                    v = 0;
+
+                hm.setPixel(i, j, qRgb(v, v, v));
+            }
         }
     }
     hm.save("./newHeight.png");
@@ -344,17 +497,17 @@ void Mesh::CreateFlatTerrain(int taille, int resolution)
 //     return coord_max;
 // }
 
-// QVector2D Mesh::Min(QVector<Pixel> data)
-// {
-//     float min = data[0].value;
-//     QVector2D coord_min;
-//     for (int i = 0; i < data.size(); i++)
-//     {
-//         if (data[i].value < min)
-//             coord_min = data[i].coord;
-//     }
-//     return coord_min;
-// }
+QVector2D Mesh::Min(QVector<Pixel> data)
+{
+    float min = data[0].value;
+    QVector2D coord_min;
+    for (int i = 0; i < data.size(); i++)
+    {
+        if (data[i].value < min)
+            coord_min = data[i].coord;
+    }
+    return coord_min;
+}
 
 void Mesh::ModifyTerrain(QVector<int> data)
 {

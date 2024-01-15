@@ -61,7 +61,6 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow();
-
 protected:
     Window *w;
     void resizeEvent(QResizeEvent *event) override
@@ -72,6 +71,7 @@ protected:
         // Par exemple :
         // qDebug() << "La fenêtre a été redimensionnée : Nouvelle taille = " << event->size();
     }
+
 };
 
 #endif

@@ -21,7 +21,7 @@ float color_factor;
 uniform sampler2D biome;
 uniform sampler2D water;
 
-in float ampl;
+in vec2 ampl;
 
 uniform sampler2D desertB;
 uniform sampler2D desertM;
@@ -46,7 +46,11 @@ uniform vec2 textureSize;
 uniform bool tool_active;
 uniform bool height_tool;
 uniform bool tree_active;
+uniform bool biome_edit_active;
+uniform bool water_tool;
 
+uniform float alt_min;
+uniform float alt_max;
 
 uniform sampler2D heightmap_tool;
 
@@ -74,38 +78,41 @@ float pourcentageProximite(float valeurReelle, float seuil1, float seuil2) {
 
 
 void initTexelWithHauteur(vec2 uv){
+   // float seuil_middle=alt_max*(ampl[1]-ampl[0])+ampl[0];
+   // float min_hauteur=alt_min*(ampl[1]-ampl[0])+ampl[0];
 
-   if(height_<0.6){
+   if(height_<alt_min-0.4){
          heightsBiomes[0]= texture(desertB, uv);
-      }else if(height_<1.5){
-         heightsBiomes[0]= mix(texture(desertB, uv), texture(desertM, uv), pourcentageProximite(height_,0.6,1));
+      }else if(height_<alt_max-0.4){
+         heightsBiomes[0]= mix(texture(desertB, uv), texture(desertM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
       }else{
           heightsBiomes[0]= texture(desertT, uv);
       }
 
-      if(height_<0.6){
+      if(height_<alt_min-0.4){
          heightsBiomes[1]= texture(canyonB, uv);
-      }else if(height_<1.5){
-         heightsBiomes[1]= mix(texture(canyonB, uv), texture(canyonM, uv), pourcentageProximite(height_,0.6,1.5));
+      }else if(height_<alt_max-0.4){
+         heightsBiomes[1]= mix(texture(canyonB, uv), texture(canyonM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
       }else{
-          heightsBiomes[1]=mix(texture(canyonM, uv), texture(canyonT, uv), pourcentageProximite(height_,1.5,2));
+          heightsBiomes[1]=mix(texture(canyonM, uv), texture(canyonT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
       }
 
-      if(height_<0.6){
+      if(height_<alt_min-0.4){
          heightsBiomes[2]= texture(montagneB, uv);
-      }else if(height_<1.5){
-         heightsBiomes[2]= mix(texture(montagneB, uv), texture(montagneM, uv), pourcentageProximite(height_,0.6,1.5));
+      }else if(height_<alt_max-0.4){
+         heightsBiomes[2]= mix(texture(montagneB, uv), texture(montagneM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
       }else{
-          heightsBiomes[2]=mix(texture(montagneM, uv), texture(montagneT, uv), pourcentageProximite(height_,1.5,2));
+          heightsBiomes[2]=mix(texture(montagneM, uv), texture(montagneT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
       }
 
-      
-      if(height_<0.6){
+      if(height_<alt_min-0.4){
          heightsBiomes[3]= texture(glacialB, uv);
-      }else if(height_<1.5){
-         heightsBiomes[3]= mix(texture(glacialB, uv), texture(glacialM, uv), pourcentageProximite(height_,0.6,1.5));
+      }else if(height_<alt_max-0.4){
+         heightsBiomes[3]= mix(texture(glacialB, uv), texture(glacialM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
+      }else if(alt_max-alt_min<0.4){
+         heightsBiomes[3]=mix(texture(glacialB, uv), texture(glacialT, uv), pourcentageProximite(height_,alt_min,alt_max));
       }else{
-          heightsBiomes[3]=mix(texture(glacialM, uv), texture(glacialT, uv), pourcentageProximite(height_,1.5,2));
+          heightsBiomes[3]=mix(texture(glacialM, uv), texture(glacialT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
       }
 }
 
@@ -135,9 +142,9 @@ vec4 getFromBiome() {
                if (diffCanyon<mindiff) {
                   id=1;
                   mindiff=diffCanyon;
-
                } 
-                if (diffMontagne<mindiff) {
+               
+               if (diffMontagne<mindiff) {
                   id=2;
                   mindiff=diffMontagne;
                }
@@ -162,7 +169,7 @@ vec4 getFromBiome() {
 void main() {
    
 
-   vec3 light_pos = light_position + vec3(0, ampl, 0);
+   vec3 light_pos = light_position + vec3(0, ampl[1], 0);
 
    // ambient
    float ambientStrength = 0.1;
@@ -196,12 +203,12 @@ void main() {
 
    vec3 v_pos = v_position.xyz;
    vec3 center_pos = (height_ != 0) ? vec3(center.x, height_, center.z) : vec3(center.x, 0, center.z);
-   if(tool_active || height_tool || tree_active)
+   if(tool_active || height_tool || tree_active || biome_edit_active || water_tool)
    {
       float dist = distance(center_pos, v_pos);
       if(dist < radius)
       {
-         fragColor = vec4((v_position.xyz + vec3(0, 0, 0))/2, 0.1);
+         fragColor = vec4((fragColor.xyz)/2, 0.1);
       }
       if(radius - 0.005 <= dist && dist <= radius)
       {

@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    QCoreApplication::setApplicationName("Terrain Authoring");  
+    QCoreApplication::setApplicationName("Terrain Authoring");
     QCoreApplication::setOrganizationName("QtProject");
     QCoreApplication::setApplicationVersion(QT_VERSION_STR);
     QCommandLineParser parser;
@@ -74,33 +74,36 @@ int main(int argc, char *argv[])
     parser.addOption(coreProfileOption);
     QCommandLineOption transparentOption("transparent", "Transparent window");
     parser.addOption(transparentOption);
-    
+
     parser.process(app);
 
     QSurfaceFormat fmt;
     fmt.setDepthBufferSize(24);
     if (parser.isSet(multipleSampleOption))
         fmt.setSamples(4);
-    if (parser.isSet(coreProfileOption)) {
+    if (parser.isSet(coreProfileOption))
+    {
         fmt.setVersion(3, 2);
         fmt.setProfile(QSurfaceFormat::CoreProfile);
     }
     QSurfaceFormat::setDefaultFormat(fmt);
 
     MainWindow mainWindow;
-  
+
     GLWidget::setTransparent(parser.isSet(transparentOption));
-    if (GLWidget::isTransparent()) {
+    if (GLWidget::isTransparent())
+    {
         mainWindow.setAttribute(Qt::WA_TranslucentBackground);
         mainWindow.setAttribute(Qt::WA_NoSystemBackground, false);
     }
-    mainWindow.resize(mainWindow.sizeHint()); 
+    mainWindow.resize(mainWindow.sizeHint());
     int desktopArea = QApplication::desktop()->width() *
-                     QApplication::desktop()->height();
+                      QApplication::desktop()->height();
     int widgetArea = mainWindow.width() * mainWindow.height();
     if (((float)widgetArea / (float)desktopArea) < 0.75f)
         mainWindow.show();
     else
         mainWindow.showMaximized();
+
     return app.exec();
 }

@@ -22,8 +22,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_GLWidget_t {
-    QByteArrayData data[17];
-    char stringdata0[196];
+    QByteArrayData data[20];
+    char stringdata0[223];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -47,8 +47,11 @@ QT_MOC_LITERAL(11, 129, 7), // "cleanup"
 QT_MOC_LITERAL(12, 137, 10), // "DrawCircle"
 QT_MOC_LITERAL(13, 148, 9), // "Tree_Tool"
 QT_MOC_LITERAL(14, 158, 16), // "Tree_Tool_Delete"
-QT_MOC_LITERAL(15, 175, 9), // "Hand_Tool"
-QT_MOC_LITERAL(16, 185, 10) // "HeightTool"
+QT_MOC_LITERAL(15, 175, 10), // "Water_Tool"
+QT_MOC_LITERAL(16, 186, 10), // "Biome_Tool"
+QT_MOC_LITERAL(17, 197, 9), // "Hand_Tool"
+QT_MOC_LITERAL(18, 207, 10), // "HeightTool"
+QT_MOC_LITERAL(19, 218, 4) // "type"
 
     },
     "GLWidget\0objectRotChangeOnX\0\0angle\0"
@@ -56,7 +59,8 @@ QT_MOC_LITERAL(16, 185, 10) // "HeightTool"
     "UpdateFPS\0newFPS\0setXRotation\0"
     "setYRotation\0setZRotation\0cleanup\0"
     "DrawCircle\0Tree_Tool\0Tree_Tool_Delete\0"
-    "Hand_Tool\0HeightTool"
+    "Water_Tool\0Biome_Tool\0Hand_Tool\0"
+    "HeightTool\0type"
 };
 #undef QT_MOC_LITERAL
 
@@ -66,7 +70,7 @@ static const uint qt_meta_data_GLWidget[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-      13,   14, // methods
+      15,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -74,21 +78,23 @@ static const uint qt_meta_data_GLWidget[] = {
        4,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    1,   79,    2, 0x06 /* Public */,
-       4,    1,   82,    2, 0x06 /* Public */,
-       5,    1,   85,    2, 0x06 /* Public */,
-       6,    1,   88,    2, 0x06 /* Public */,
+       1,    1,   89,    2, 0x06 /* Public */,
+       4,    1,   92,    2, 0x06 /* Public */,
+       5,    1,   95,    2, 0x06 /* Public */,
+       6,    1,   98,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       8,    1,   91,    2, 0x0a /* Public */,
-       9,    1,   94,    2, 0x0a /* Public */,
-      10,    1,   97,    2, 0x0a /* Public */,
-      11,    0,  100,    2, 0x0a /* Public */,
-      12,    0,  101,    2, 0x0a /* Public */,
-      13,    0,  102,    2, 0x0a /* Public */,
-      14,    0,  103,    2, 0x0a /* Public */,
-      15,    0,  104,    2, 0x0a /* Public */,
-      16,    0,  105,    2, 0x0a /* Public */,
+       8,    1,  101,    2, 0x0a /* Public */,
+       9,    1,  104,    2, 0x0a /* Public */,
+      10,    1,  107,    2, 0x0a /* Public */,
+      11,    0,  110,    2, 0x0a /* Public */,
+      12,    0,  111,    2, 0x0a /* Public */,
+      13,    0,  112,    2, 0x0a /* Public */,
+      14,    0,  113,    2, 0x0a /* Public */,
+      15,    0,  114,    2, 0x0a /* Public */,
+      16,    0,  115,    2, 0x0a /* Public */,
+      17,    0,  116,    2, 0x0a /* Public */,
+      18,    1,  117,    2, 0x0a /* Public */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::Int,    3,
@@ -106,6 +112,8 @@ static const uint qt_meta_data_GLWidget[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::Int,   19,
 
        0        // eod
 };
@@ -127,8 +135,10 @@ void GLWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         case 8: _t->DrawCircle(); break;
         case 9: _t->Tree_Tool(); break;
         case 10: _t->Tree_Tool_Delete(); break;
-        case 11: _t->Hand_Tool(); break;
-        case 12: _t->HeightTool(); break;
+        case 11: _t->Water_Tool(); break;
+        case 12: _t->Biome_Tool(); break;
+        case 13: _t->Hand_Tool(); break;
+        case 14: _t->HeightTool((*reinterpret_cast< int(*)>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -195,13 +205,13 @@ int GLWidget::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 13)
+        if (_id < 15)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 13;
+        _id -= 15;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 13)
+        if (_id < 15)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 13;
+        _id -= 15;
     }
     return _id;
 }

@@ -22,8 +22,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_Window_t {
-    QByteArrayData data[14];
-    char stringdata0[139];
+    QByteArrayData data[17];
+    char stringdata0[179];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -45,13 +45,17 @@ QT_MOC_LITERAL(9, 70, 9), // "ChangeFPS"
 QT_MOC_LITERAL(10, 80, 3), // "fps"
 QT_MOC_LITERAL(11, 84, 18), // "UpdateAmplitudeMax"
 QT_MOC_LITERAL(12, 103, 18), // "UpdateAmplitudeMin"
-QT_MOC_LITERAL(13, 122, 16) // "UpdateDegrePente"
+QT_MOC_LITERAL(13, 122, 16), // "UpdateDegrePente"
+QT_MOC_LITERAL(14, 139, 13), // "UpdateDensite"
+QT_MOC_LITERAL(15, 153, 12), // "UpdateAltMax"
+QT_MOC_LITERAL(16, 166, 12) // "UpdateAltMin"
 
     },
     "Window\0AmplitudeMIN\0\0v\0AmplitudeMAX\0"
     "initTexture\0p\0initRidge\0initRiver\0"
     "ChangeFPS\0fps\0UpdateAmplitudeMax\0"
-    "UpdateAmplitudeMin\0UpdateDegrePente"
+    "UpdateAmplitudeMin\0UpdateDegrePente\0"
+    "UpdateDensite\0UpdateAltMax\0UpdateAltMin"
 };
 #undef QT_MOC_LITERAL
 
@@ -61,7 +65,7 @@ static const uint qt_meta_data_Window[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-       9,   14, // methods
+      12,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -69,17 +73,20 @@ static const uint qt_meta_data_Window[] = {
        2,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    1,   59,    2, 0x06 /* Public */,
-       4,    1,   62,    2, 0x06 /* Public */,
+       1,    1,   74,    2, 0x06 /* Public */,
+       4,    1,   77,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       5,    1,   65,    2, 0x0a /* Public */,
-       7,    1,   68,    2, 0x0a /* Public */,
-       8,    1,   71,    2, 0x0a /* Public */,
-       9,    1,   74,    2, 0x0a /* Public */,
-      11,    1,   77,    2, 0x0a /* Public */,
-      12,    1,   80,    2, 0x0a /* Public */,
-      13,    1,   83,    2, 0x0a /* Public */,
+       5,    1,   80,    2, 0x0a /* Public */,
+       7,    1,   83,    2, 0x0a /* Public */,
+       8,    1,   86,    2, 0x0a /* Public */,
+       9,    1,   89,    2, 0x0a /* Public */,
+      11,    1,   92,    2, 0x0a /* Public */,
+      12,    1,   95,    2, 0x0a /* Public */,
+      13,    1,   98,    2, 0x0a /* Public */,
+      14,    1,  101,    2, 0x0a /* Public */,
+      15,    1,  104,    2, 0x0a /* Public */,
+      16,    1,  107,    2, 0x0a /* Public */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::Float,    3,
@@ -93,6 +100,9 @@ static const uint qt_meta_data_Window[] = {
     QMetaType::Void, QMetaType::Int,    3,
     QMetaType::Void, QMetaType::Int,    3,
     QMetaType::Void, QMetaType::Int,    3,
+    QMetaType::Void, QMetaType::Int,    3,
+    QMetaType::Void, QMetaType::Float,    3,
+    QMetaType::Void, QMetaType::Float,    3,
 
        0        // eod
 };
@@ -112,6 +122,9 @@ void Window::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 6: _t->UpdateAmplitudeMax((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 7: _t->UpdateAmplitudeMin((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 8: _t->UpdateDegrePente((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 9: _t->UpdateDensite((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 10: _t->UpdateAltMax((*reinterpret_cast< float(*)>(_a[1]))); break;
+        case 11: _t->UpdateAltMin((*reinterpret_cast< float(*)>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -162,13 +175,13 @@ int Window::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 9)
+        if (_id < 12)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 9;
+        _id -= 12;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 9)
+        if (_id < 12)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 9;
+        _id -= 12;
     }
     return _id;
 }

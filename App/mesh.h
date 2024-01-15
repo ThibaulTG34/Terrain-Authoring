@@ -18,6 +18,7 @@ struct Pixel
 {
     QVector2D coord;
     float distance;
+    int value;
 };
 
 class Mesh : protected QOpenGLFunctions
@@ -37,7 +38,7 @@ public:
     void setResolution(int r);
     void DrawCircle(float cx, float cy, float r, int num_segments);
     void SmoothMoyenneur(float r, QVector3D c, float min, float max, QImage &hmap);
-    void GenerateHeight(float r, QVector3D c, QImage &hm, bool shift);
+    void GenerateHeight(float r, QVector3D c, QImage &hm, bool shift, int type);
 
 private:
     void createCube();
@@ -48,6 +49,7 @@ private:
     void computeNormals();
     void averageNeighbors(QVector2D texCoord, QImage &image, float r);
     float norm(QVector3D v1, QVector3D v2);
+    QVector<QVector2D> GetMinMaxCoord(QVector3D c, float r, QImage &hmap);
 
     QVector2D Min(QVector<Pixel> data);
     QVector2D Max(QVector<Pixel> data);

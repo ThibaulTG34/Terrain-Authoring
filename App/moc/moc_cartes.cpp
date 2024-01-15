@@ -22,8 +22,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_Cartes_t {
-    QByteArrayData data[9];
-    char stringdata0[88];
+    QByteArrayData data[10];
+    char stringdata0[103];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -40,12 +40,13 @@ QT_MOC_LITERAL(4, 26, 15), // "UpdateSliderMin"
 QT_MOC_LITERAL(5, 42, 7), // "initMap"
 QT_MOC_LITERAL(6, 50, 12), // "initMapBiome"
 QT_MOC_LITERAL(7, 63, 11), // "initMapVege"
-QT_MOC_LITERAL(8, 75, 12) // "initMapWater"
+QT_MOC_LITERAL(8, 75, 12), // "initMapWater"
+QT_MOC_LITERAL(9, 88, 14) // "OuvrirReglages"
 
     },
     "Cartes\0UpdateSliderMax\0\0v\0UpdateSliderMin\0"
     "initMap\0initMapBiome\0initMapVege\0"
-    "initMapWater"
+    "initMapWater\0OuvrirReglages"
 };
 #undef QT_MOC_LITERAL
 
@@ -55,7 +56,7 @@ static const uint qt_meta_data_Cartes[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-       6,   14, // methods
+       7,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -63,20 +64,22 @@ static const uint qt_meta_data_Cartes[] = {
        2,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    1,   44,    2, 0x06 /* Public */,
-       4,    1,   47,    2, 0x06 /* Public */,
+       1,    1,   49,    2, 0x06 /* Public */,
+       4,    1,   52,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       5,    0,   50,    2, 0x0a /* Public */,
-       6,    0,   51,    2, 0x0a /* Public */,
-       7,    0,   52,    2, 0x0a /* Public */,
-       8,    0,   53,    2, 0x0a /* Public */,
+       5,    0,   55,    2, 0x0a /* Public */,
+       6,    0,   56,    2, 0x0a /* Public */,
+       7,    0,   57,    2, 0x0a /* Public */,
+       8,    0,   58,    2, 0x0a /* Public */,
+       9,    0,   59,    2, 0x0a /* Public */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::Float,    3,
     QMetaType::Void, QMetaType::Float,    3,
 
  // slots: parameters
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -97,6 +100,7 @@ void Cartes::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 3: _t->initMapBiome(); break;
         case 4: _t->initMapVege(); break;
         case 5: _t->initMapWater(); break;
+        case 6: _t->OuvrirReglages(); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -147,13 +151,13 @@ int Cartes::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 6)
+        if (_id < 7)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 6;
+        _id -= 7;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 6)
+        if (_id < 7)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 6;
+        _id -= 7;
     }
     return _id;
 }

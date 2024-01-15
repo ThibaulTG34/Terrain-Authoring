@@ -66,6 +66,7 @@
 #include <QCheckBox>
 #include <QGraphicsOpacityEffect>
 #include <QDebug>
+#include <QMenu>
 
 using namespace std;
 
@@ -76,6 +77,7 @@ Window::Window(MainWindow *mw)
 
     QWidget *w = new QWidget;
     QHBoxLayout *container = new QHBoxLayout;
+    // container->addWidget(alt_min);
     w->setLayout(container);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
@@ -85,6 +87,11 @@ Window::Window(MainWindow *mw)
 
     glWidget = new GLWidget;
     QObject::connect(glWidget, &GLWidget::UpdateFPS, this, &Window::ChangeFPS);
+
+    // QWidget *minimap= new QWidget();
+    // minimap->setStyleSheet("background-color: rgba(1,1,,0.2)");
+    
+    
 
     container->setSpacing(20);
 
@@ -100,10 +107,10 @@ Window::Window(MainWindow *mw)
     ToolSide->addWidget(FPS);
     ToolSide->setAlignment(FPS, Qt::AlignTop);
     ToolSideContainer->setStyleSheet("padding: 0 ; margin: 0;");
-    ToolSideContainer->setFixedSize(120, 660);
+    ToolSideContainer->setFixedSize(120, 1000);
 
     QWidget *BackgroundTools = new QWidget();
-    BackgroundTools->setFixedSize(QSize(100, 500));
+    BackgroundTools->setFixedSize(QSize(100, 800));
     BackgroundTools->setStyleSheet("background-color: lightgrey;border-radius:20px;");
     ToolSide->addWidget(BackgroundTools);
     ToolSide->setAlignment(BackgroundTools, Qt::AlignTop);
@@ -125,13 +132,7 @@ Window::Window(MainWindow *mw)
     tool1->setIconSize(QSize(30, 30));
     connect(tool1, &QPushButton::clicked, glWidget, &GLWidget::Hand_Tool);
     connect(tool1, &QPushButton::clicked, [=]()
-            {
-        tool2->setStyleSheet("background-color:grey");
-        tool1->setStyleSheet("background-color:rgb(180,180,180)");
-        tool3->setStyleSheet("background-color:grey");
-        tool5->setStyleSheet("background-color:grey");
-        tool6->setStyleSheet("background-color:grey");
-        tool4->setStyleSheet("background-color:grey"); });
+            { this->setTool_to_Active(1); });
 
     tool2 = new QPushButton();
     QIcon iconSmooth("./smooth_icon.png");
@@ -141,30 +142,36 @@ Window::Window(MainWindow *mw)
     tool2->setStyleSheet("background-color:grey");
     connect(tool2, &QPushButton::clicked, glWidget, &GLWidget::DrawCircle);
     connect(tool2, &QPushButton::clicked, [=]()
-            {
-        tool1->setStyleSheet("background-color:grey");
-        tool3->setStyleSheet("background-color:grey");
-        tool4->setStyleSheet("background-color:grey");
-        tool5->setStyleSheet("background-color:grey");
-        tool6->setStyleSheet("background-color:grey");
-        tool2->setStyleSheet("background-color:rgb(180,180,180)"); });
+            { this->setTool_to_Active(2); });
 
     tool3 = new QPushButton();
-     QIcon iconHeight("./height_icon.png");
+    QIcon iconHeight("./height_icon.png");
     tool3->setIcon(iconHeight);
     tool3->setIconSize(QSize(30, 30));
     tool3->setFixedSize(QSize(40, 40));
     tool3->setStyleSheet("background-color:grey");
-    connect(tool3, &QPushButton::clicked, glWidget, &GLWidget::HeightTool);
-    connect(tool3, &QPushButton::clicked, [=]()
-            {
-        tool1->setStyleSheet("background-color:grey");
-        tool2->setStyleSheet("background-color:grey");
-        tool4->setStyleSheet("background-color:grey");
-        tool3->setStyleSheet("background-color:rgb(180,180,180)"); 
-        tool6->setStyleSheet("background-color:rgb(180,180,180)"); 
-        tool5->setStyleSheet("background-color:grey");
-        });
+    QMenu *subMenuHeight = new QMenu("Sous-menu");
+    QAction *action1_h = subMenuHeight->addAction("Gaussienne");
+    QAction *action2_h = subMenuHeight->addAction("fonction linéaire");
+
+    QObject::connect(tool3, &QPushButton::clicked, [this, subMenuHeight]()
+                     { subMenuHeight->exec(tool3->mapToGlobal(QPoint(0, tool3->height()))); });
+
+    connect(action1_h, &QAction::triggered, this, [this]()
+            { this->setTool_to_Active(3);
+            glWidget->HeightTool(1); });
+    connect(action2_h, &QAction::triggered, this, [this]()
+            { this->setTool_to_Active(3);
+            glWidget->HeightTool(2); });
+    // connect(tool3, &QPushButton::clicked, glWidget, &GLWidget::HeightTool);
+    // connect(tool3, &QPushButton::clicked, [=]()
+    //         {
+    //     tool1->setStyleSheet("background-color:grey");
+    //     tool2->setStyleSheet("background-color:grey");
+    //     tool4->setStyleSheet("background-color:grey");
+    //     tool3->setStyleSheet("background-color:rgb(180,180,180)");
+    //     tool6->setStyleSheet("background-color:rgb(180,180,180)");
+    //     tool5->setStyleSheet("background-color:grey"); });
 
     tool4 = new QPushButton();
     QIcon iconTree("./tree_icon.png");
@@ -174,15 +181,7 @@ Window::Window(MainWindow *mw)
     tool4->setStyleSheet("background-color:grey");
     connect(tool4, &QPushButton::clicked, glWidget, &GLWidget::Tree_Tool);
     connect(tool4, &QPushButton::clicked, [=]()
-            {
-        tool1->setStyleSheet("background-color:grey");
-        tool3->setStyleSheet("background-color:grey");
-        tool2->setStyleSheet("background-color:grey");
-        tool4->setStyleSheet("background-color:rgb(180,180,180)");
-        tool5->setStyleSheet("background-color:grey");
-        tool6->setStyleSheet("background-color:grey");
-         });
-
+            { this->setTool_to_Active(4); });
 
     tool5 = new QPushButton();
     QIcon iconTreeDelete("./tree_icon_delete.png");
@@ -192,30 +191,74 @@ Window::Window(MainWindow *mw)
     tool5->setStyleSheet("background-color:grey");
     connect(tool5, &QPushButton::clicked, glWidget, &GLWidget::Tree_Tool_Delete);
     connect(tool5, &QPushButton::clicked, [=]()
-            {
-        tool1->setStyleSheet("background-color:grey");
-        tool3->setStyleSheet("background-color:grey");
-        tool2->setStyleSheet("background-color:grey");
-        tool4->setStyleSheet("background-color:grey");
-        tool6->setStyleSheet("background-color:grey");
-        tool5->setStyleSheet("background-color:rgb(180,180,180)"); });
+            { this->setTool_to_Active(5); });
 
     tool6 = new QPushButton();
-    QIcon iconEditBiome("./tree_icon_delete.png");
-    tool6->setIcon(iconTreeDelete);
+    QIcon iconEditBiome("./biome_icon.png");
+    tool6->setIcon(iconEditBiome);
+
+    // Création du sous-menu
+    QMenu *subMenu = new QMenu("Sous-menu");
+    QAction *action1 = subMenu->addAction("Biome Désert");
+    QAction *action2 = subMenu->addAction("Biome Canyon");
+    QAction *action3 = subMenu->addAction("Biome Montagne");
+    QAction *action4 = subMenu->addAction("Biome Neige");
+
+    connect(action1, &QAction::triggered, this, [this]()
+            { this->setTool_to_Active(6);
+            glWidget->setBiomeRef(215);
+            glWidget->Biome_Tool(); });
+    connect(action2, &QAction::triggered, this, [this]()
+            { this->setTool_to_Active(6);
+            glWidget->setBiomeRef(87);
+            glWidget->Biome_Tool(); });
+    connect(action3, &QAction::triggered, this, [this]()
+            { this->setTool_to_Active(6);
+            glWidget->setBiomeRef(127);
+            glWidget->Biome_Tool(); });
+    connect(action4, &QAction::triggered, this, [this]()
+            { this->setTool_to_Active(6);
+            glWidget->setBiomeRef(255);
+            glWidget->Biome_Tool(); });
+
+    // Associer le sous-menu au bouton
+    // tool6->setMenu(subMenu);
+
+    // Connecter le signal clicked du bouton au slot pour afficher le sous-menu
+    QObject::connect(tool6, &QPushButton::clicked, [this, subMenu]()
+                     {
+        if (maps->biomeIsSet)
+        {
+            subMenu->exec(tool6->mapToGlobal(QPoint(0, tool6->height())));
+        }
+        else
+        {
+            QMessageBox::information(this, "Avertissement Biome", "Une carte biome est nécéssaire pour les modifier");
+        } });
+
     tool6->setIconSize(QSize(30, 30));
     tool6->setFixedSize(QSize(40, 40));
     tool6->setStyleSheet("background-color:grey");
-    connect(tool6, &QPushButton::clicked, glWidget, &GLWidget::Tree_Tool_Delete);
-    connect(tool6, &QPushButton::clicked, [=]()
-            {
-        tool1->setStyleSheet("background-color:grey");
-        tool3->setStyleSheet("background-color:grey");
-        tool2->setStyleSheet("background-color:grey");
-        tool4->setStyleSheet("background-color:grey");
-        tool5->setStyleSheet("background-color:grey");
-        tool6->setStyleSheet("background-color:rgb(180,180,180)"); });
+    // connect(tool6, &QPushButton::clicked, glWidget, &GLWidget::Biome_Tool);
 
+    tool7 = new QPushButton();
+    QIcon iconWater("./water_logo.png");
+    tool7->setIcon(iconWater);
+    tool7->setIconSize(QSize(30, 30));
+    tool7->setFixedSize(QSize(40, 40));
+    tool7->setStyleSheet("background-color:grey");
+    connect(tool7, &QPushButton::clicked, glWidget, [=]()
+            {
+        if (!water_is_set)
+        {
+            QMessageBox::information(this, "Avertissement Eau", "Une carte d'eau est nécéssaire pour utiliser cet outil");
+        }
+        else
+        {
+            this->setTool_to_Active(7);
+            SLOT(w->Water_Tool());
+        } });
+  
     QVBoxLayout *ToolsLayout = new QVBoxLayout;
     BackgroundTools->setLayout(ToolsLayout);
 
@@ -225,6 +268,7 @@ Window::Window(MainWindow *mw)
     ToolsLayout->addWidget(tool4);
     ToolsLayout->addWidget(tool5);
     ToolsLayout->addWidget(tool6);
+    ToolsLayout->addWidget(tool7);
 
     ToolsLayout->setAlignment(tool1, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool2, Qt::AlignHCenter);
@@ -232,15 +276,52 @@ Window::Window(MainWindow *mw)
     ToolsLayout->setAlignment(tool4, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool5, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool6, Qt::AlignHCenter);
+    ToolsLayout->setAlignment(tool7, Qt::AlignHCenter);
 
     setLayout(mainLayout);
 
     setWindowTitle(tr("Qt OpenGL"));
 }
+void Window::setTool_to_Active(int t)
+{
+    tool1->setStyleSheet("background-color:grey");
+    tool3->setStyleSheet("background-color:grey");
+    tool2->setStyleSheet("background-color:grey");
+    tool4->setStyleSheet("background-color:grey");
+    tool5->setStyleSheet("background-color:grey");
+    tool6->setStyleSheet("background-color:grey");
+    tool7->setStyleSheet("background-color:grey");
+
+    switch (t)
+    {
+    case 1:
+        tool1->setStyleSheet("background-color:rgb(180,180,180)");
+        break;
+    case 2:
+        tool2->setStyleSheet("background-color:rgb(180,180,180)");
+        break;
+    case 3:
+        tool3->setStyleSheet("background-color:rgb(180,180,180)");
+        break;
+    case 4:
+        tool4->setStyleSheet("background-color:rgb(180,180,180)");
+        break;
+    case 5:
+        tool5->setStyleSheet("background-color:rgb(180,180,180)");
+        break;
+    case 6:
+        tool6->setStyleSheet("background-color:rgb(180,180,180)");
+        break;
+    case 7:
+        tool7->setStyleSheet("background-color:rgb(180,180,180)");
+        break;
+    default:
+        break;
+    }
+}
 
 void Window::keyPressEvent(QKeyEvent *e)
 {
-
     if (e->key() == Qt::Key_Plus)
     {
         glWidget->UpdateResolution(glWidget->getResolution() + 1);
@@ -266,7 +347,6 @@ void Window::keyPressEvent(QKeyEvent *e)
     {
         glWidget->angle_speed -= 0.02;
     }
-
 
     glWidget->keyPressEvent(e);
 }
@@ -312,6 +392,7 @@ void Window::BiomeModif(QString imgname)
 
 void Window::WaterModif(QString imgname)
 {
+    water_is_set=true;
     glWidget->UpdateWater(imgname);
 }
 
@@ -337,7 +418,23 @@ void Window::UpdateAmplitudeMin(int v)
     glWidget->setAmplitudeMIN(float(v) / 10.f);
 }
 
+void Window::UpdateAltMax(float v)
+{
+    glWidget->setAltMAX(v);
+}
+
+void Window::UpdateAltMin(float v)
+{
+    glWidget->setAltMIN(v);
+}
+
 void Window::UpdateDegrePente(int v)
 {
     glWidget->setDegrePente(v);
+}
+
+void Window::UpdateDensite(int v)
+{
+    std::cout << "densite : " << v << std::endl;
+    glWidget->setDensite(80 - v + 6);
 }
