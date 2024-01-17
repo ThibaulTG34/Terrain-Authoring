@@ -76,6 +76,8 @@ public:
     void WaterModif(QString imgname);
     void VegeModif(QString imgname);
     QLabel *FPS;
+    QLabel *Reso;
+    QPushButton *Aide;
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -90,6 +92,7 @@ public slots:
     void initRidge(QPixmap p);
     void initRiver(QPixmap p);
     void ChangeFPS(int fps);
+    void ChangeReso(int reso);
     void UpdateAmplitudeMax(int v);
     void UpdateAmplitudeMin(int v);
     void UpdateDegrePente(int v);
@@ -109,7 +112,6 @@ private:
     QPushButton *tool7;
     void setTool_to_Active(int t);
 
-
     Cartes *maps;
 
     QLabel *texture;
@@ -120,7 +122,8 @@ private:
 
     QLabel *rivieres;
     QVector<QVector3D> rivieres_data;
-    bool water_is_set=false;
+    bool water_is_set = false;
+    bool vegetation_is_set = false;
 
     MainWindow *mainWindow;
 };

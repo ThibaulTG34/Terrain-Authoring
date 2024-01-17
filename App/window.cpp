@@ -87,17 +87,42 @@ Window::Window(MainWindow *mw)
 
     glWidget = new GLWidget;
     QObject::connect(glWidget, &GLWidget::UpdateFPS, this, &Window::ChangeFPS);
+    QObject::connect(glWidget, &GLWidget::UpdateReso, this, &Window::ChangeReso);
 
     // QWidget *minimap= new QWidget();
     // minimap->setStyleSheet("background-color: rgba(1,1,,0.2)");
-    
-    
 
     container->setSpacing(20);
 
     QVBoxLayout *ToolSide = new QVBoxLayout;
     QWidget *ToolSideContainer = new QWidget;
     ToolSideContainer->setLayout(ToolSide);
+    Aide = new QPushButton("HELP");
+    Aide->setStyleSheet("font-size: 16pt;font-weight: bold;");
+    connect(Aide, &QPushButton::clicked, [=]()
+            {
+            QMessageBox msgBox;
+            msgBox.setTextFormat(Qt::RichText); 
+
+            msgBox.setText("<h3>Indications pour l'application <em>Terrain Authoring</em></h3>\
+            <p>Ici vous trouverez toutes les indications nécessaire pour une bonne expérience sur notre application.</p></br>\
+            <p>Touches utiles :</p>\
+            <p><b>Z,Q,S et D :</b> déplacement du cercle de sélection</p>\
+            <p><b>+/- :</b> augmenter/réduire la résolution du terrain</p>\
+            <p><b>w :</b> appliquer le mode Wireframe</p>\
+            <p><b>clique molette + déplacement de la souris :</b> rotation du terrain</p>\
+            <p><b>clique gauche (lorsqu'un outil est activé) :</b> applique l'outil dans la zone de sélection</p>\
+            <p><b>shift + clique gauche (seulement si outil des hauteurs activé):</b> réduire les hauteurs dans la zone</p>\
+            <p><b>shift + clique gauche (seulement si outil des eaux activé):</b> enlève l'eau dans la zone</p>\
+            <p><b>shift + molette :</b> augmenter/réduire le rayon du cercle</p>\
+            <p><b>bouton réglages transitions :</b> permet de régler les valeurs des transitions etre chaque texture selon la hauteur pour un biome</p>");
+
+            msgBox.exec(); 
+            });
+
+    Aide->setFixedSize(80, 50);
+    ToolSide->addWidget(Aide);
+    ToolSide->setAlignment(Aide, Qt::AlignTop | Qt::AlignHCenter);
 
     FPS = new QLabel();
     FPS->setText("FPS: --");
@@ -107,10 +132,18 @@ Window::Window(MainWindow *mw)
     ToolSide->addWidget(FPS);
     ToolSide->setAlignment(FPS, Qt::AlignTop);
     ToolSideContainer->setStyleSheet("padding: 0 ; margin: 0;");
-    ToolSideContainer->setFixedSize(120, 1000);
+    ToolSideContainer->setFixedSize(140, 910);
+
+    Reso = new QLabel();
+
+    Reso->setText("Résolution: --");
+    Reso->setStyleSheet("font-size: 11pt;");
+
+    ToolSide->addWidget(Reso);
+    ToolSide->setAlignment(Reso, Qt::AlignTop);
 
     QWidget *BackgroundTools = new QWidget();
-    BackgroundTools->setFixedSize(QSize(100, 800));
+    BackgroundTools->setFixedSize(QSize(100, 750));
     BackgroundTools->setStyleSheet("background-color: lightgrey;border-radius:20px;");
     ToolSide->addWidget(BackgroundTools);
     ToolSide->setAlignment(BackgroundTools, Qt::AlignTop);
@@ -158,7 +191,8 @@ Window::Window(MainWindow *mw)
                      { subMenuHeight->exec(tool3->mapToGlobal(QPoint(0, tool3->height()))); });
 
     connect(action1_h, &QAction::triggered, this, [this]()
-            { this->setTool_to_Active(3);
+            {
+            this->setTool_to_Active(3);
             glWidget->HeightTool(1); });
     connect(action2_h, &QAction::triggered, this, [this]()
             { this->setTool_to_Active(3);
@@ -181,7 +215,12 @@ Window::Window(MainWindow *mw)
     tool4->setStyleSheet("background-color:grey");
     connect(tool4, &QPushButton::clicked, glWidget, &GLWidget::Tree_Tool);
     connect(tool4, &QPushButton::clicked, [=]()
-            { this->setTool_to_Active(4); });
+            { if (!vegetation_is_set)
+                {
+                    QMessageBox::critical(this, "Avertissement Vegetation", "Une carte de vegetation est nécéssaire pour utiliser cet outil");
+                }
+                else
+                {this->setTool_to_Active(4);} });
 
     tool5 = new QPushButton();
     QIcon iconTreeDelete("./tree_icon_delete.png");
@@ -191,7 +230,15 @@ Window::Window(MainWindow *mw)
     tool5->setStyleSheet("background-color:grey");
     connect(tool5, &QPushButton::clicked, glWidget, &GLWidget::Tree_Tool_Delete);
     connect(tool5, &QPushButton::clicked, [=]()
-            { this->setTool_to_Active(5); });
+            {  if (!vegetation_is_set)
+                {
+                    QMessageBox msgBox(QMessageBox::Critical, "Avertissement Vegetation", "Une carte de vegetation est nécessaire pour utiliser cet outil", QMessageBox::Ok, this);
+                    msgBox.exec();
+                }
+                else
+                {
+                    this->setTool_to_Active(5);
+                } });
 
     tool6 = new QPushButton();
     QIcon iconEditBiome("./biome_icon.png");
@@ -233,7 +280,7 @@ Window::Window(MainWindow *mw)
         }
         else
         {
-            QMessageBox::information(this, "Avertissement Biome", "Une carte biome est nécéssaire pour les modifier");
+            QMessageBox::critical(this, "Avertissement Biome", "Une carte biome est nécéssaire pour les modifier");
         } });
 
     tool6->setIconSize(QSize(30, 30));
@@ -251,14 +298,14 @@ Window::Window(MainWindow *mw)
             {
         if (!water_is_set)
         {
-            QMessageBox::information(this, "Avertissement Eau", "Une carte d'eau est nécéssaire pour utiliser cet outil");
+            QMessageBox::critical(this, "Avertissement Eau", "Une carte d'eau est nécéssaire pour utiliser cet outil");
         }
         else
         {
             this->setTool_to_Active(7);
             glWidget->Water_Tool();
         } });
-  
+
     QVBoxLayout *ToolsLayout = new QVBoxLayout;
     BackgroundTools->setLayout(ToolsLayout);
 
@@ -278,9 +325,18 @@ Window::Window(MainWindow *mw)
     ToolsLayout->setAlignment(tool6, Qt::AlignHCenter);
     ToolsLayout->setAlignment(tool7, Qt::AlignHCenter);
 
+    QPushButton *SaveChanges = new QPushButton();
+    connect(SaveChanges, &QPushButton::clicked, glWidget, &GLWidget::SaveChanges);
+
+    SaveChanges->setFixedSize(200, 60);
+    SaveChanges->setText("Exporter mes modifications");
+    mainLayout->addWidget(SaveChanges);
+    mainLayout->setAlignment(SaveChanges, Qt::AlignHCenter);
+
     setLayout(mainLayout);
 
     setWindowTitle(tr("Qt OpenGL"));
+
 }
 void Window::setTool_to_Active(int t)
 {
@@ -392,18 +448,24 @@ void Window::BiomeModif(QString imgname)
 
 void Window::WaterModif(QString imgname)
 {
-    water_is_set=true;
+    water_is_set = true;
     glWidget->UpdateWater(imgname);
 }
 
 void Window::VegeModif(QString imgname)
 {
+    vegetation_is_set = true;
     glWidget->UpdateVegetation(QImage(imgname));
 }
 
 void Window::ChangeFPS(int fps)
 {
     FPS->setText(QString("FPS:%1").arg(fps));
+}
+
+void Window::ChangeReso(int reso)
+{
+    Reso->setText(QString("Résolution: %1").arg(reso));
 }
 
 void Window::UpdateAmplitudeMax(int v)

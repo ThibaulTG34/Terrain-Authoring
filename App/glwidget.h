@@ -50,8 +50,6 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glext.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #ifndef GLWIDGET_H
 #define GLWIDGET_H
@@ -145,6 +143,7 @@ public slots:
     void Biome_Tool();
     void Hand_Tool();
     void HeightTool(int type);
+    void SaveChanges();
 
 signals:
 
@@ -153,6 +152,7 @@ signals:
     void objectRotChangeOnY(int angle);
     void objectRotChangeOnZ(int angle);
     void UpdateFPS(int newFPS);
+    void UpdateReso(int newReso);
 
 protected:
     void initializeGL() override;
@@ -216,8 +216,8 @@ private:
     QOpenGLTexture *hmap;
     QOpenGLTexture *hmap_tool;
     QOpenGLTexture *NEW_hmap_tool;
-    float amplitude_max;
-    float amplitude_min;
+    float amplitude_max=2.0f;
+    float amplitude_min=0.1f;
 
     QOpenGLTexture *water;
     QImage  water_img;

@@ -90,82 +90,6 @@ QVector<QVector2D> Mesh::GetMinMaxCoord(QVector3D c, float r, QImage &hmap)
 
 void Mesh::SmoothMoyenneur(float r, QVector3D c, float min, float max, QImage &hmap)
 {
-    // int width = hmap.width() - 1;
-    // int height = hmap.height() - 1;
-    // float dist = 0;
-
-    // QVector<Pixel> neighbors;
-
-    // float mean = 0.0f;
-
-    // for (int i = 0; i < this->vertices.size(); i++)
-    // {
-    //     dist = norm(c, vertices[i]);
-
-    //     if (dist <= r)
-    //     {
-    //         QRgb pixelColor_current = hmap.pixel(uvs[i].x() * (hmap.width() - 1), uvs[i].y() * (hmap.height() - 1));
-    //         // QRgb pixelColor_after = hmap.pixel(uvs[i + 1].x() * (hmap.width() - 1), uvs[i + 1].y() * (hmap.height() - 1));
-    //         // QRgb pixelColor_before = hmap.pixel(uvs[i - 1].x() * (hmap.width() - 1), uvs[i - 1].y() * (hmap.height() - 1));
-    //         int grayValue_curr = qGray(pixelColor_current);
-    //         // int grayValue_aft = qGray(pixelColor_after);
-    //         // int grayValue_bef = qGray(pixelColor_before);
-
-    //         // int diff = grayValue_curr - grayValue_aft;
-    //         // int diff1 = grayValue_curr - grayValue_bef;
-
-    //         // float res = grayValue_curr;
-    //         // float res2 = grayValue_curr;
-
-    //         // if (diff > 10 && diff1 > 10)
-    //         // {
-    //         //     res -= diff;
-    //         //     res2 += diff/2;
-    //         // }
-
-    //         // int v = static_cast<int>(res);
-    //         // int v2 = static_cast<int>(res2);
-
-    //         // hmap.setPixel(uvs[i].x() * (hmap.width() - 1), uvs[i].y() * (hmap.height() - 1), qRgb(v, v, v));
-    //         // hmap.setPixel(uvs[i - 1].x() * (hmap.width() - 1), uvs[i - 1].y() * (hmap.height() - 1), qRgb(v2, v2, v2));
-    //         // hmap.setPixel(uvs[i + 1].x() * (hmap.width() - 1), uvs[i + 1].y() * (hmap.height() - 1), qRgb(v2, v2, v2));
-
-    //         Pixel p;
-    //         p.coord = QVector2D(uvs[i].x() * (hmap.width() - 1), uvs[i].y() * (hmap.height() - 1));
-    //         p.distance = dist;
-    //         neighbors.append(p);
-    //         mean += grayValue_curr;
-    //     }
-    // }
-
-    // mean /= static_cast<float>(neighbors.size());
-    // QVector2D coord_min = Min(neighbors);
-
-    // for (Pixel neighbor : neighbors)
-    // {
-    //     int nx = static_cast<int>(neighbor.coord.x());
-    //     int ny = static_cast<int>(neighbor.coord.y());
-    //     QRgb pixelColor = hmap.pixel(nx, ny);
-    //     int grayValue = qGray(pixelColor);
-
-    //     float g = static_cast<float>(1.0f / static_cast<float>(qSqrt(M_PI))) * qExp(-0.5f * qPow(static_cast<float>(((neighbor.distance) * 10.0f)), 2.0f));
-    //     // g *= 100.0f;
-    //     qDebug() << "avant smooth (" << nx << "," << ny << ") : " << grayValue;
-    //     float h = static_cast<float>(grayValue) / 255.0f;
-    //     h = h * (max - min) + min;
-    //     float r = h * g;
-    //     if (r < 256)
-    //         grayValue = static_cast<int>(r);
-    //     else
-    //     {
-    //         grayValue = 255;
-    //     }
-
-    //     qDebug() << "apres smooth (" << nx << "," << ny << ") : " << grayValue;
-    //     qDebug() << "----------------------------";
-    //     hmap.setPixel(nx, ny, qRgb(grayValue, grayValue, grayValue));
-    // }
-
     QVector<QVector2D> vect = GetMinMaxCoord(c, r, hmap);
     float max_x = vect[1].x();
     float max_y = vect[1].y();
@@ -174,9 +98,11 @@ void Mesh::SmoothMoyenneur(float r, QVector3D c, float min, float max, QImage &h
 
     QVector2D center_in_image = QVector2D((max_x + min_x) / 2, (max_y + min_y) / 2);
     int rayon_in_image = (max_x - min_x) / 2;
-    for (size_t i = 0; i < hmap.width(); i++)
+    int width=hmap.width();
+    int height=hmap.height();
+    for (size_t i = 0; i < width; i++)
     {
-        for (size_t j = 0; j < hmap.height(); j++)
+        for (size_t j = 0; j < height; j++)
         {
             float blur = 0;
             float sum = 0;
@@ -194,23 +120,23 @@ void Mesh::SmoothMoyenneur(float r, QVector3D c, float min, float max, QImage &h
 
                         // if (idx_i < 0)
                         //     idx_i = 0;
-                        // if (idx_i >= hmap.width())
-                        //     idx_i = hmap.width() - 1;
+                        // if (idx_i >= width)
+                        //     idx_i = width - 1;
 
                         // if (idx_j < 0)
                         //     idx_j = 0;
                         // if (idx_j >= hmap.height())
                         //     idx_j = hmap.height() - 1;
 
-                        if (idx_i < 0 || idx_i >= hmap.width())
+                        if (idx_i < 0 || idx_i >= width)
                         {
-                            idx_i = std::abs(idx_i) % (2 * hmap.width());
-                            idx_i = (idx_i >= hmap.width()) ? 2 * hmap.width() - 1 - idx_i : idx_i;
+                            idx_i = std::abs(idx_i) % (2 * width);
+                            idx_i = (idx_i >= width) ? 2 * width - 1 - idx_i : idx_i;
                         }
-                        if (idx_j < 0 || idx_j >= hmap.height())
+                        if (idx_j < 0 || idx_j >= height)
                         {
-                            idx_j = std::abs(idx_j) % (2 * hmap.height());
-                            idx_j = (idx_j >= hmap.height()) ? 2 * hmap.height() - 1 - idx_j : idx_j;
+                            idx_j = std::abs(idx_j) % (2 * height);
+                            idx_j = (idx_j >= height) ? 2 * height - 1 - idx_j : idx_j;
                         }
 
                         QRgb pix = hmap.pixel(idx_i, idx_j);
@@ -234,7 +160,6 @@ void Mesh::SmoothMoyenneur(float r, QVector3D c, float min, float max, QImage &h
             }
         }
     }
-    hmap.save("./modif.png");
 }
 
 //------- UTILE POUR LA GENERATION DES HAUTEURS --------
@@ -292,14 +217,14 @@ void Mesh::GenerateHeight(float r, QVector3D c, QImage &hm, bool shift, int type
                     break;
                 }
                 case 2:
-                    hauteur = 20.0f * (1.0f - distance / static_cast<float>(rayon_in_image));
+                    hauteur = v+20.0f * (1.0f - distance / static_cast<float>(rayon_in_image));
                     break;
                 default:
                     break;
                 }
 
                 if (!shift)
-                    v += hauteur;
+                    v = hauteur;
                 else
                     v *= 0.9;
 

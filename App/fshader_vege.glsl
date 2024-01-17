@@ -8,7 +8,6 @@ uniform sampler2D text_tree;
 uniform float amplitudeMAX;
 uniform vec3 light_position;
 uniform vec3 lightColor;
-uniform bool selected;
 
 void main()
 {
@@ -25,10 +24,6 @@ void main()
    float diff = max(dot(norm, lightDir), 0.3);
    vec3 diffuse = diff * lightColor;
 
-    if(!selected){
-        fragColor =vec4((ambient + diffuse) * texture(text_tree, uvs_).xyz,1.0);
-    }else{
-        fragColor =vec4(vec3(0.0,1.0,1.0),1.0);
-    }
+    fragColor =vec4((ambient + diffuse) * texture(text_tree, uvs_).xyz,1.0);
 
 }

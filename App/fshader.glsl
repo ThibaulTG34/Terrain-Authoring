@@ -48,6 +48,7 @@ uniform bool height_tool;
 uniform bool tree_active;
 uniform bool biome_edit_active;
 uniform bool water_active;
+uniform bool tree_active_delete;
 
 uniform float alt_min;
 uniform float alt_max;
@@ -80,39 +81,77 @@ float pourcentageProximite(float valeurReelle, float seuil1, float seuil2) {
 void initTexelWithHauteur(vec2 uv){
    // float seuil_middle=alt_max*(ampl[1]-ampl[0])+ampl[0];
    // float min_hauteur=alt_min*(ampl[1]-ampl[0])+ampl[0];
-
-   if(height_<alt_min-0.4){
-         heightsBiomes[0]= texture(desertB, uv);
-      }else if(height_<alt_max-0.4){
-         heightsBiomes[0]= mix(texture(desertB, uv), texture(desertM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
-      }else{
-          heightsBiomes[0]= texture(desertT, uv);
+   float distance_de_smooth=0.4*(alt_max-alt_min);
+  if(height_<alt_min-0.4){
+         heightsBiomes[1]= texture(desertB, uv);
+      }else if(height_<alt_max-0.4 ){
+         if(alt_max-alt_min<0.41){
+            heightsBiomes[0]=mix(texture(desertB, uv), texture(desertT, uv), pourcentageProximite(height_,alt_min-0.4,alt_max-0.4));
+         }else{
+            heightsBiomes[0]= mix(texture(desertB, uv), texture(desertM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
+         }
+      }else
+       if(height_>alt_max-0.4){
+          if(alt_max-alt_min<0.41){
+            heightsBiomes[0]= texture(desertT, uv);
+         }
+         else{
+             heightsBiomes[0]=mix(texture(desertM, uv), texture(desertT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
+         }
       }
 
-      if(height_<alt_min-0.4){
+   if(height_<alt_min-0.4){
          heightsBiomes[1]= texture(canyonB, uv);
-      }else if(height_<alt_max-0.4){
-         heightsBiomes[1]= mix(texture(canyonB, uv), texture(canyonM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
-      }else{
-          heightsBiomes[1]=mix(texture(canyonM, uv), texture(canyonT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
+      }else if(height_<alt_max-0.4 ){
+         if(alt_max-alt_min<0.41){
+            heightsBiomes[1]=mix(texture(canyonB, uv), texture(canyonT, uv), pourcentageProximite(height_,alt_min-0.4,alt_max-0.4));
+         }else{
+            heightsBiomes[1]= mix(texture(canyonB, uv), texture(canyonM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
+         }
+      }else
+       if(height_>alt_max-0.4){
+          if(alt_max-alt_min<0.41){
+            heightsBiomes[1]= texture(canyonT, uv);
+         }
+         else{
+             heightsBiomes[1]=mix(texture(canyonM, uv), texture(canyonT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
+         }
       }
 
       if(height_<alt_min-0.4){
          heightsBiomes[2]= texture(montagneB, uv);
-      }else if(height_<alt_max-0.4){
-         heightsBiomes[2]= mix(texture(montagneB, uv), texture(montagneM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
-      }else{
-          heightsBiomes[2]=mix(texture(montagneM, uv), texture(montagneT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
+      }else if(height_<alt_max-0.4 ){
+         if(alt_max-alt_min<0.41){
+            heightsBiomes[2]=mix(texture(montagneB, uv), texture(montagneT, uv), pourcentageProximite(height_,alt_min-0.4,alt_max-0.4));
+         }else{
+            heightsBiomes[2]= mix(texture(montagneB, uv), texture(montagneM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
+         }
+      }else
+       if(height_>alt_max-0.4){
+          if(alt_max-alt_min<0.41){
+            heightsBiomes[2]= texture(montagneT, uv);
+         }
+         else{
+             heightsBiomes[2]=mix(texture(montagneM, uv), texture(montagneT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
+         }
       }
 
       if(height_<alt_min-0.4){
          heightsBiomes[3]= texture(glacialB, uv);
-      }else if(height_<alt_max-0.4){
-         heightsBiomes[3]= mix(texture(glacialB, uv), texture(glacialM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
-      }else if(alt_max-alt_min<0.4){
-         heightsBiomes[3]=mix(texture(glacialB, uv), texture(glacialT, uv), pourcentageProximite(height_,alt_min,alt_max));
-      }else{
-          heightsBiomes[3]=mix(texture(glacialM, uv), texture(glacialT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
+      }else if(height_<alt_max-0.4 ){
+         if(alt_max-alt_min<0.41){
+            heightsBiomes[3]=mix(texture(glacialB, uv), texture(glacialT, uv), pourcentageProximite(height_,alt_min-0.4,alt_max-0.4));
+         }else{
+            heightsBiomes[3]= mix(texture(glacialB, uv), texture(glacialM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
+         }
+      }else
+       if(height_>alt_max-0.4){
+          if(alt_max-alt_min<0.41){
+            heightsBiomes[3]= texture(glacialT, uv);
+         }
+         else{
+             heightsBiomes[3]=mix(texture(glacialM, uv), texture(glacialT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
+         }
       }
 }
 
@@ -203,7 +242,7 @@ void main() {
 
    vec3 v_pos = v_position.xyz;
    vec3 center_pos = (height_ != 0) ? vec3(center.x, height_, center.z) : vec3(center.x, 0, center.z);
-   if(tool_active || height_tool || tree_active || biome_edit_active || water_active)
+   if(tool_active || height_tool || tree_active || biome_edit_active || water_active ||tree_active_delete)
    {
       float dist = distance(center_pos, v_pos);
       if(dist < radius)

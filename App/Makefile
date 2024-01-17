@@ -415,8 +415,6 @@ moc/moc_glwidget.cpp: glwidget.h \
 	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include glwidget.h -o moc/moc_glwidget.cpp
 
 moc/moc_cartes.cpp: cartes.h \
-		basics.h \
-		vec.h \
 		window.h \
 		cartes.h \
 		moc/moc_predefs.h \
@@ -425,8 +423,6 @@ moc/moc_cartes.cpp: cartes.h \
 
 moc/moc_window.cpp: window.h \
 		cartes.h \
-		basics.h \
-		vec.h \
 		window.h \
 		moc/moc_predefs.h \
 		/usr/lib/qt5/bin/moc
@@ -435,8 +431,6 @@ moc/moc_window.cpp: window.h \
 moc/moc_mainwindow.cpp: mainwindow.h \
 		window.h \
 		cartes.h \
-		basics.h \
-		vec.h \
 		moc/moc_predefs.h \
 		/usr/lib/qt5/bin/moc
 	/usr/lib/qt5/bin/moc $(DEFINES) --include /mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/mnt/c/Users/fabien/Desktop/GitPourThibault/Terrain/App -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include mainwindow.h -o moc/moc_mainwindow.cpp
@@ -465,8 +459,6 @@ obj/glwidget.o: glwidget.cpp glwidget.h \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/glwidget.o glwidget.cpp
 
 obj/cartes.o: cartes.cpp cartes.h \
-		basics.h \
-		vec.h \
 		window.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/cartes.o cartes.cpp
 
@@ -477,9 +469,7 @@ obj/main.o: main.cpp glwidget.h \
 		AssimpModel.h \
 		mainwindow.h \
 		window.h \
-		cartes.h \
-		basics.h \
-		vec.h
+		cartes.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/main.o main.cpp
 
 obj/mesh.o: mesh.cpp mesh.h
@@ -492,16 +482,12 @@ obj/window.o: window.cpp glwidget.h \
 		AssimpModel.h \
 		window.h \
 		cartes.h \
-		basics.h \
-		vec.h \
 		mainwindow.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/window.o window.cpp
 
 obj/mainwindow.o: mainwindow.cpp mainwindow.h \
 		window.h \
-		cartes.h \
-		basics.h \
-		vec.h
+		cartes.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/mainwindow.o mainwindow.cpp
 
 obj/Camera.o: Camera.cpp Camera.h
