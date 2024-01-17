@@ -82,23 +82,10 @@ void initTexelWithHauteur(vec2 uv){
    // float seuil_middle=alt_max*(ampl[1]-ampl[0])+ampl[0];
    // float min_hauteur=alt_min*(ampl[1]-ampl[0])+ampl[0];
    float distance_de_smooth=0.4*(alt_max-alt_min);
-  if(height_<alt_min-0.4){
-         heightsBiomes[1]= texture(desertB, uv);
-      }else if(height_<alt_max-0.4 ){
-         if(alt_max-alt_min<0.41){
-            heightsBiomes[0]=mix(texture(desertB, uv), texture(desertT, uv), pourcentageProximite(height_,alt_min-0.4,alt_max-0.4));
-         }else{
-            heightsBiomes[0]= mix(texture(desertB, uv), texture(desertM, uv), pourcentageProximite(height_,alt_min-0.4,alt_min));
-         }
-      }else
-       if(height_>alt_max-0.4){
-          if(alt_max-alt_min<0.41){
-            heightsBiomes[0]= texture(desertT, uv);
-         }
-         else{
-             heightsBiomes[0]=mix(texture(desertM, uv), texture(desertT, uv), pourcentageProximite(height_,alt_max-0.4,alt_max));
-         }
-      }
+
+             heightsBiomes[0]=mix(texture(desertB, uv), texture(desertM, uv), pourcentageProximite(height_,alt_min,alt_max));
+         
+      
 
    if(height_<alt_min-0.4){
          heightsBiomes[1]= texture(canyonB, uv);

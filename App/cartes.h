@@ -17,7 +17,6 @@
 #include <QCheckBox>
 #include <QGraphicsOpacityEffect>
 #include <QLabel>
-#include <basics.h>
 #include <window.h>
 class Window;
 

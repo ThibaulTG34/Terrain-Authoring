@@ -59,7 +59,6 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QMatrix4x4>
-#include "logo.h"
 #include "mesh.h"
 #include <QOpenGLTexture>
 #include <QTime>

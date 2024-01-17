@@ -1,7 +1,5 @@
 #include "cartes.h"
-#include <QVBoxLayout>
-#include <basics.h>
-#include <QMessageBox>
+#include <QVBoxLayout>2#include <QMessageBox>
 
 Cartes::Cartes(QWidget *parent)
     : QWidget{parent}
@@ -70,16 +68,14 @@ Cartes::Cartes(QWidget *parent)
 
     QLabel *label1 = new QLabel("1er transition (min):");
     alt_min = new QSlider(Qt::Horizontal);
-    alt_min->setRange(0, 40);
+    alt_min->setRange(0, 20);
     alt_min->setValue(0);
-    // alt_min->setPageStep(20 * 0.05);
     alt_min->setTickInterval(1);
 
     QLabel *label2 = new QLabel("2nd transition (max):");
     alt_max = new QSlider(Qt::Horizontal);
-    alt_max->setRange(0, 80);
+    alt_max->setRange(0, 20);
     alt_max->setValue(0);
-    // alt_max->setPageStep(20 * 0.005);
     alt_max->setTickInterval(1);
 
     layout->addWidget(label1);
@@ -229,7 +225,7 @@ void Cartes::HandleAltMinValueChanged(int value)
 {
     if (alt_min->value() >= alt_max->value())
     {
-        if (alt_max->value() == 80)
+        if (alt_max->value() == 20)
         {
             float tmp = alt_min->value();
             alt_min->setValue(alt_max->value()-1);
@@ -242,8 +238,8 @@ void Cartes::HandleAltMinValueChanged(int value)
             alt_max->setValue(tmp+1);
         }
     }
-    w->UpdateAltMin((float)alt_min->value()/40.0f);
-    w->UpdateAltMax((float)alt_max->value()/40.0f);
+    w->UpdateAltMin((float)alt_min->value()/10.0f);
+    w->UpdateAltMax((float)alt_max->value()/10.0f);
 }
 
 QSlider *Cartes::createSlider()

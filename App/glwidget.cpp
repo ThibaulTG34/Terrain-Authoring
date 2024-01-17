@@ -822,11 +822,34 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
                     double distance = std::sqrt((i - center_in_image.x()) * (i - center_in_image.x()) + (j - center_in_image.y()) * (j - center_in_image.y()));
                     if (distance <= rayon_in_image)
                     {
-                        biome_img.setPixel(i, j, qRgb(biome_ref, biome_ref, biome_ref));
+                       switch (biome_ref)
+                       {
+                       case 215:
+                        biome_img.setPixel(i, j, qRgb(255, 255, 0));
+
+                        break;
+                        case 87:
+                        biome_img.setPixel(i, j, qRgb(255, 0, 0));
+
+                        break;
+
+                        case 127:
+                        biome_img.setPixel(i, j, qRgb(0, 255, 0));
+
+                        break;
+
+                        case 255:
+                        biome_img.setPixel(i, j, qRgb(255, 255, 255));
+
+                        break;
+                       
+                       default:
+                        break;
+                       }
                     }
                 }
             }
-
+            
             biome = new QOpenGLTexture(biome_img.convertToFormat(QImage::Format_Grayscale8));
             UpdateVegetation(vegetation_map);
         }

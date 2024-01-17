@@ -406,7 +406,6 @@ compiler_moc_header_make_all: moc/moc_glwidget.cpp moc/moc_cartes.cpp moc/moc_wi
 compiler_moc_header_clean:
 	-$(DEL_FILE) moc/moc_glwidget.cpp moc/moc_cartes.cpp moc/moc_window.cpp moc/moc_mainwindow.cpp
 moc/moc_glwidget.cpp: glwidget.h \
-		logo.h \
 		mesh.h \
 		Camera.h \
 		AssimpModel.h \
@@ -452,7 +451,6 @@ compiler_clean: compiler_rcc_clean compiler_moc_predefs_clean compiler_moc_heade
 ####### Compile
 
 obj/glwidget.o: glwidget.cpp glwidget.h \
-		logo.h \
 		mesh.h \
 		Camera.h \
 		AssimpModel.h
@@ -463,7 +461,6 @@ obj/cartes.o: cartes.cpp cartes.h \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/cartes.o cartes.cpp
 
 obj/main.o: main.cpp glwidget.h \
-		logo.h \
 		mesh.h \
 		Camera.h \
 		AssimpModel.h \
@@ -476,7 +473,6 @@ obj/mesh.o: mesh.cpp mesh.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/mesh.o mesh.cpp
 
 obj/window.o: window.cpp glwidget.h \
-		logo.h \
 		mesh.h \
 		Camera.h \
 		AssimpModel.h \
