@@ -15,13 +15,36 @@ Dans ce projet en binome, nous avions implémenté une interface graphique avec 
 ### Augmentation/Réduction des hauteurs
 Pour cette partie, nous avions choisi d'utiliser deux types de fonctions pour créer des hauteurs au terrain. Dans un premier temps, nous avons une fonction basée sur la distance (entre le centre du cercle et les points situés à l'intérieur de celui-ci) et le rayon du cercle. 
 
-<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/hauteur-fonction-distance.png" alt="image" style="width:500px;height:auto;"></div>
+<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/hauteur-fonction-distance.png" alt="image" style="width:450px;height:auto;"></div>
 
 Ensuite, nous avons une fonction basée sur l'équation de la fonction gaussienne.
 
-<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/hauteur-fonction-gaussienne.png" alt="image" style="width:500px;height:auto;"></div>
+<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/hauteur-fonction-gaussienne.png" alt="image" style="width:450px;height:auto;"></div>
 
-## Installation sur Linux
+### Lissage des hauteurs
+Le lissage des hauteurs permet à l'utilisateur "d'arrondir" les pics qui lui sont désagréables. Pour cela, nous avons utilisé une moyenne pondérée avec des poids gaussiens. Cette moyenne est faite avec les pixels qui sont présents dans le cercle de sélection. Voici un avant/après du lissage.
+
+<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/Terrain-non-lisse.png" alt="image" style="width:425px;height:auto;">
+<img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/Terrain-lisse.png" alt="image" style="width:500px;height:auto;">
+</div>
+
+### Ajout/Suppression de végétations
+La végétation est un modèle 3D que l'on a importé grâce à la librairie Assimp. Ces modèles sont générés aléatoirement selon une densité dans le cercle de sélection. 
+<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/arbreplus.png" alt="image" style="width:500px;height:auto;"></div>
+
+### Modification de biomes
+L'utilisateur a le choix entre plusieurs biomes différents (neige, désert, etc.). Il peut déplacer le cercle afin de choisir où il veut ajouter le biome et en cliquant sur le bouton gauche de la souris, cela modifie les pixels présents dans le cercle en mettant la valeur de référence du biome (que l'on aura définie auparavant). La nouvelle carte est ensuite renvoyée aux shaders pour que la modification de texture soit faite.
+
+<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/ajout-biome.png" alt="image" style="width:400px;height:auto;">
+<img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/changement-de-biome.png" alt="image" style="width:455px;height:auto;">
+</div>
+
+## Exemple de terrain
+<div align="center">
+<img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/rendu-final.png" alt="image" style="width:455px;height:auto;">
+</div>
+
+# Installation sur Linux
 Ouvrir un terminal
 
 Cloner le projet dans le répertoire souhaité
