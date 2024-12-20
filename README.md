@@ -15,11 +15,11 @@ Dans ce projet en binome, nous avions implémenté une interface graphique avec 
 ### Augmentation/Réduction des hauteurs
 Pour cette partie, nous avions choisi d'utiliser deux types de fonctions pour créer des hauteurs au terrain. Dans un premier temps, nous avons une fonction basée sur la distance (entre le centre du cercle et les points situés à l'intérieur de celui-ci) et le rayon du cercle. 
 
-<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/Interface.png" alt="image" style="width:500px;height:auto;"></div>
+<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/hauteur-fonction-distance.png" alt="image" style="width:500px;height:auto;"></div>
 
 Ensuite, nous avons une fonction basée sur l'équation de la fonction gaussienne.
 
-<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/Interface.png" alt="image" style="width:500px;height:auto;"></div>
+<div align="center"><img src="https://github.com/ThibaulTG34/Terrain-Authoring/blob/dev/Resultats/hauteur-fonction-gaussienne.png" alt="image" style="width:500px;height:auto;"></div>
 
 ## Installation sur Linux
 Ouvrir un terminal
